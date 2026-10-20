@@ -19,7 +19,7 @@ export function Details({ settings }: { settings: EventSettings }) {
         <Floral className="absolute left-4 top-10 h-24 w-24 opacity-40 sm:h-32 sm:w-32" />
         <Floral className="absolute bottom-10 right-4 h-24 w-24 opacity-40 sm:h-32 sm:w-32" />
         <div className="mx-auto max-w-2xl text-center">
-          <SectionTitle eyebrow="Xi Amukeriwa · You are welcome" title="Love, Family & Tradition" />
+          <SectionTitle eyebrow="A Union of Two Families" title="Love, Family & Tradition" />
           <p className="whitespace-pre-line font-display text-xl leading-relaxed text-foreground/90 sm:text-2xl">{settings.welcome_message}</p>
           <p className="mt-8 font-script text-4xl text-gold">{settings.couple_names}</p>
         </div>
