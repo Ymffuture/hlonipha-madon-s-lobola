@@ -10,7 +10,7 @@ export function Hero({ settings }: { settings?: EventSettings | undefined }) {
         <p className="fade-up font-script text-6xl text-gold-gradient sm:text-8xl">{settings?.monogram ?? "H & M"}</p>
         <p className="fade-up mt-6 text-xs uppercase tracking-[0.5em] text-beige [animation-delay:.2s]">It's Time to Ululate</p>
         <h1 className="fade-up mt-4 text-4xl font-light leading-tight sm:text-6xl [animation-delay:.35s]">
-          {settings?.couple_names ?? "Hlonipha & Madon"}'s
+          {settings?.couple_names ?? "Hlonipha & Mcdon"}'s
           <span className="block italic text-beige">{settings?.event_name ?? "Lobola Luncheon"}</span>
         </h1>
         <div className="fade-up mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row [animation-delay:.5s]">
