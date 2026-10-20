@@ -36,7 +36,7 @@ ON CONFLICT DO NOTHING;
 -- Event settings (single row, public read)
 CREATE TABLE public.event_settings (
   id int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  couple_names text NOT NULL DEFAULT 'Hlonipha & Madon',
+  couple_names text NOT NULL DEFAULT 'Hlonipha & Mcdon',
   monogram text NOT NULL DEFAULT 'H & M',
   event_name text NOT NULL DEFAULT 'Lobola Luncheon',
   event_datetime timestamptz NOT NULL DEFAULT '2026-12-22 10:30:00+02',
