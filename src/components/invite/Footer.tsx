@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import footerImg from "@/assets/couple-footer.jpg.asset.json";
 import type { EventSettings } from "@/lib/event";
+import { VideoBackground } from "./VideoBackground";
 
 export function Footer({ settings }: { settings?: EventSettings | undefined }) {
   return (
     <footer className="relative overflow-hidden text-ivory">
-      <img src={footerImg.url} alt="Hlonipha and Madon smiling together" loading="lazy" className="absolute inset-0 h-full w-full object-cover object-[center_70%]" width={1400} height={1900} />
+      <VideoBackground pauseOffscreen />
       <div className="footer-overlay absolute inset-0" />
       <div className="pattern-band relative" />
       <div className="relative mx-auto max-w-3xl px-6 py-28 text-center">
