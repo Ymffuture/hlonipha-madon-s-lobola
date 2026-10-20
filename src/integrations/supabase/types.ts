@@ -14,16 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      event_settings: {
+        Row: {
+          color_beige: string
+          color_brown: string
+          color_gold: string
+          color_ivory: string
+          couple_names: string
+          dress_code: string
+          event_datetime: string
+          event_name: string
+          hero_video_url: string | null
+          id: number
+          max_guests: number
+          monogram: string
+          rsvp_contact: string
+          updated_at: string
+          venue: string
+          welcome_message: string
+        }
+        Insert: {
+          color_beige?: string
+          color_brown?: string
+          color_gold?: string
+          color_ivory?: string
+          couple_names?: string
+          dress_code?: string
+          event_datetime?: string
+          event_name?: string
+          hero_video_url?: string | null
+          id?: number
+          max_guests?: number
+          monogram?: string
+          rsvp_contact?: string
+          updated_at?: string
+          venue?: string
+          welcome_message?: string
+        }
+        Update: {
+          color_beige?: string
+          color_brown?: string
+          color_gold?: string
+          color_ivory?: string
+          couple_names?: string
+          dress_code?: string
+          event_datetime?: string
+          event_name?: string
+          hero_video_url?: string | null
+          id?: number
+          max_guests?: number
+          monogram?: string
+          rsvp_contact?: string
+          updated_at?: string
+          venue?: string
+          welcome_message?: string
+        }
+        Relationships: []
+      }
+      rsvps: {
+        Row: {
+          accessibility: string | null
+          additional_guests: string | null
+          attendance: Database["public"]["Enums"]["attendance_status"]
+          created_at: string
+          dietary: string | null
+          email: string | null
+          full_name: string
+          guest_count: number
+          id: string
+          message: string | null
+          phone: string
+          phone_normalized: string
+          updated_at: string
+        }
+        Insert: {
+          accessibility?: string | null
+          additional_guests?: string | null
+          attendance: Database["public"]["Enums"]["attendance_status"]
+          created_at?: string
+          dietary?: string | null
+          email?: string | null
+          full_name: string
+          guest_count?: number
+          id?: string
+          message?: string | null
+          phone: string
+          phone_normalized: string
+          updated_at?: string
+        }
+        Update: {
+          accessibility?: string | null
+          additional_guests?: string | null
+          attendance?: Database["public"]["Enums"]["attendance_status"]
+          created_at?: string
+          dietary?: string | null
+          email?: string | null
+          full_name?: string
+          guest_count?: number
+          id?: string
+          message?: string | null
+          phone?: string
+          phone_normalized?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      submit_rsvp: {
+        Args: {
+          _accessibility: string
+          _additional_guests: string
+          _attendance: Database["public"]["Enums"]["attendance_status"]
+          _dietary: string
+          _email: string
+          _full_name: string
+          _guest_count: number
+          _message: string
+          _phone: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin"
+      attendance_status: "attending" | "not_attending" | "undecided"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +293,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin"],
+      attendance_status: ["attending", "not_attending", "undecided"],
+    },
   },
 } as const
