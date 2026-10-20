@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
 import { Ornament } from "@/components/invite/Ornament";
 
@@ -25,23 +24,41 @@ function AuthPage() {
   const [busy, setBusy] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState("");
 
+  // Go to /admin as soon as a session exists (already signed in, or just back from the OAuth redirect)
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/admin", replace: true });
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) navigate({ to: "/admin", replace: true });
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) navigate({ to: "/admin", replace: true });
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, [navigate]);
+
+  // Supabase sends OAuth failures back as ?error_description=... on the redirect URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search + "&" + window.location.hash.replace(/^#/, ""));
+    const desc = params.get("error_description");
+    if (desc) setError(desc.replace(/\+/g, " "));
+  }, []);
 
   async function signIn(provider: "google" | "apple") {
     setBusy(provider);
     setError("");
-    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: `${window.location.origin}/auth` });
-    if (result.error) {
-      setError("Sign in failed. Please try again.");
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth` },
+    });
+    if (err) {
+      // e.g. "Unsupported provider: provider is not enabled" -> provider not switched on in Supabase
+      setError(err.message || "Sign in failed. Please try again.");
       setBusy(null);
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/admin", replace: true });
+    // On success the browser is redirected to the provider, so nothing else to do here.
   }
 
   const btn = "flex w-full items-center justify-center gap-3 rounded-full border border-input bg-background px-6 py-3 text-sm font-medium transition hover:border-gold disabled:opacity-60";
