@@ -116,18 +116,18 @@ export function RsvpForm({ maxGuests }: { maxGuests: number }) {
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <Label htmlFor="full_name">Full name *</Label>
-              <Input id="full_name" autoComplete="name" className={field} value={form.full_name} onChange={(e) => set("full_name", e.target.value)} aria-invalid={!!errors.full_name} aria-describedby="full_name-err" maxLength={120} required />
+              <Input id="full_name" autoComplete="name" className={field} value={form.full_name} onChange={(e) => set("full_name", e.target.value)} aria-invalid={!!errors["full_name"]} aria-describedby="full_name-err" maxLength={120} required />
               <Err k="full_name" />
             </div>
             <div>
               <Label htmlFor="phone">Phone number *</Label>
-              <Input id="phone" type="tel" autoComplete="tel" className={field} value={form.phone} onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors.phone} aria-describedby="phone-err" maxLength={20} required />
+              <Input id="phone" type="tel" autoComplete="tel" className={field} value={form.phone} onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors["phone"]} aria-describedby="phone-err" maxLength={20} required />
               <Err k="phone" />
             </div>
           </div>
           <div>
             <Label htmlFor="email">Email (optional)</Label>
-            <Input id="email" type="email" autoComplete="email" className={field} value={form.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors.email} aria-describedby="email-err" maxLength={255} />
+            <Input id="email" type="email" autoComplete="email" className={field} value={form.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors["email"]} aria-describedby="email-err" maxLength={255} />
             <Err k="email" />
           </div>
 

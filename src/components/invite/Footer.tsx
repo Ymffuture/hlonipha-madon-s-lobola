@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import footerImg from "@/assets/couple-footer.jpg.asset.json";
 import type { EventSettings } from "@/lib/event";
 
-export function Footer({ settings }: { settings?: EventSettings }) {
+export function Footer({ settings }: { settings?: EventSettings | undefined }) {
   return (
     <footer className="relative overflow-hidden text-ivory">
       <img src={footerImg.url} alt="Hlonipha and Madon smiling together" loading="lazy" className="absolute inset-0 h-full w-full object-cover object-[center_70%]" width={1400} height={1900} />

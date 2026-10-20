@@ -67,7 +67,7 @@ export const RSVP_ERRORS: Record<string, string> = {
 export function rsvpErrorMessage(msg: string | undefined) {
   if (!msg) return "Something went wrong. Please try again.";
   const key = Object.keys(RSVP_ERRORS).find((k) => msg.includes(k));
-  return key ? RSVP_ERRORS[key] : "We couldn't save your RSVP. Please check your connection and try again.";
+  return key ? (RSVP_ERRORS[key] ?? "") : "We couldn't save your RSVP. Please check your connection and try again.";
 }
 
 const csvCell = (v: unknown) => {
