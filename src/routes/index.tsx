@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "H & M — Hlonipha & Mcdon's Lobola Luncheon" },
-      { name: "description", content: "It's time to ululate! Join Hlonipha & Madon for their traditional Xitsonga Lobola Luncheon on 22 December 2026 in Xihoko Village, Tzaneen. RSVP online." },
+      { name: "description", content: "It's time to ululate! Join Hlonipha & Mcdon for their traditional Xitsonga Lobola Luncheon on 22 December 2026 in Xihoko Village, Tzaneen. RSVP online." },
       { property: "og:title", content: "H & M — It's Time to Ululate" },
       { property: "og:description", content: "Hlonipha & Mcdon's Lobola Luncheon · 22 December 2026 · Xihoko Village, Tzaneen. RSVP online." },
       { property: "og:type", content: "website" },
