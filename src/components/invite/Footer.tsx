@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { EventSettings } from "@/lib/event";
-import { VideoBackground } from "./VideoBackground";
+import { VideoBackground } from "./VideoBackgroundfooter";
 
 export function Footer({ settings }: { settings?: EventSettings | undefined }) {
   return (
