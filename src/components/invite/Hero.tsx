@@ -3,7 +3,7 @@ import heroVideo from "@/assets/hero-loop.mp4.asset.json";
 import heroPoster from "@/assets/hero-poster.jpg.asset.json";
 import type { EventSettings } from "@/lib/event";
 
-export function Hero({ settings }: { settings?: EventSettings }) {
+export function Hero({ settings }: { settings?: EventSettings | undefined }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
   const src = settings?.hero_video_url?.trim() || heroVideo.url;
