@@ -43,7 +43,7 @@ CREATE TABLE public.event_settings (
   venue text NOT NULL DEFAULT 'Xihoko Village, Tzaneen, South Africa',
   dress_code text NOT NULL DEFAULT 'Traditional Xitsonga Attire',
   rsvp_contact text NOT NULL DEFAULT '078 326 4716',
-  welcome_message text NOT NULL DEFAULT 'With joyful hearts, our families invite you to celebrate the union of Hlonipha and Madon. Come as we honour love, family and the traditions of our ancestors — an afternoon of ululation, xibelani, song and shared blessings as two families become one.',
+  welcome_message text NOT NULL DEFAULT 'With joyful hearts, our families invite you to celebrate the union of Hlonipha and Mcdon. Come as we honour love, family and the traditions of our ancestors — an afternoon of ululation, xibelani, song and shared blessings as two families become one.',
   hero_video_url text,
   max_guests int NOT NULL DEFAULT 5 CHECK (max_guests BETWEEN 1 AND 50),
   color_ivory text NOT NULL DEFAULT '#F8F0DF',
