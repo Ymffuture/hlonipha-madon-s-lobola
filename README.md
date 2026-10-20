@@ -1,4 +1,4 @@
-# Hlonipha & Madon’s Lobola
+# Hlonipha & Mcdon’s Lobola
 
 Build a beautiful, premium, mobile-responsive online invitation website for H & M's Lobola Celebration, a traditional Xitsonga wedding celebration in South Africa.
 
@@ -30,7 +30,7 @@ Display:
 
 "It's Time to Ululate"
 
-"Hlonipha & Madon's Lobola Luncheon"
+"Hlonipha & Mcdon's Lobola Luncheon"
 
 
 
@@ -40,7 +40,7 @@ Include "View Invitation" and "RSVP Now" buttons.
 
 2. EVENT DETAILS
 
-Couple: Hlonipha & Madon
+Couple: Hlonipha & Mcdon
 
 Event: Lobola Luncheon
 
