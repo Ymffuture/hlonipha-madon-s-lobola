@@ -1,6 +1,7 @@
 import { CalendarDays, Clock, MapPin, Shirt, Phone, Navigation } from "lucide-react";
 import { formatEventDate, mapsUrl, type EventSettings } from "@/lib/event";
 import { Countdown } from "./Countdown";
+import { CountdownBackground } from "./CountdownBackground";
 import { Floral, SectionTitle } from "./Ornament";
 
 export function Details({ settings }: { settings: EventSettings }) {
@@ -24,13 +25,13 @@ export function Details({ settings }: { settings: EventSettings }) {
         </div>
       </section>
 
-      <section className="bg-secondary px-6 py-20">
+      <CountdownBackground className="px-6 py-20">
         <div className="mx-auto max-w-3xl">
-          <SectionTitle eyebrow="Counting down" title="Until We Celebrate" />
+          <SectionTitle eyebrow="Counting down" title="Until We Celebrate" light />
           <Countdown iso={settings.event_datetime} />
-          <p className="mt-4 text-center text-xs text-muted-foreground">South Africa Standard Time (Johannesburg)</p>
+          <p className="mt-4 text-center text-xs text-ivory/80">South Africa Standard Time (Johannesburg)</p>
         </div>
-      </section>
+      </CountdownBackground>
 
       <section className="px-6 py-24">
         <div className="mx-auto max-w-4xl">

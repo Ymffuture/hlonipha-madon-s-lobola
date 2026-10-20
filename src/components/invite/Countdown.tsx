@@ -32,9 +32,9 @@ export function Countdown({ iso }: { iso: string }) {
   return (
     <div className="grid grid-cols-4 gap-2 sm:gap-4" role="timer" aria-live="off">
       {units.map(([label, v]) => (
-        <div key={label} className="rounded-lg border border-border bg-card px-2 py-4 text-center shadow-card">
-          <div className="font-display text-3xl tabular-nums text-foreground sm:text-5xl">{v == null ? "–" : String(v).padStart(2, "0")}</div>
-          <div className="mt-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground sm:text-xs">{label}</div>
+        <div key={label} className="rounded-lg border border-ivory/30 bg-black/30 px-2 py-4 text-center text-ivory shadow-card backdrop-blur-md">
+          <div className="font-display text-3xl tabular-nums text-ivory sm:text-5xl">{v == null ? "–" : String(v).padStart(2, "0")}</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.25em] text-beige sm:text-xs">{label}</div>
         </div>
       ))}
     </div>

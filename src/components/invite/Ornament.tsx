@@ -25,11 +25,11 @@ export function Floral({ className = "" }: { className?: string }) {
   );
 }
 
-export function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
+export function SectionTitle({ eyebrow, title, light = false }: { eyebrow: string; title: string; light?: boolean }) {
   return (
     <div className="mb-10 text-center">
       <p className="text-xs uppercase tracking-[0.35em] text-gold">{eyebrow}</p>
-      <h2 className="mt-3 text-4xl font-medium text-foreground sm:text-5xl">{title}</h2>
+      <h2 className={`mt-3 text-4xl font-medium sm:text-5xl ${light ? "text-ivory" : "text-foreground"}`}>{title}</h2>
       <Ornament className="mt-4" />
     </div>
   );
