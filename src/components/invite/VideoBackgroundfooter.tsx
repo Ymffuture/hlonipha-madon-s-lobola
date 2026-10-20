@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-export const DEFAULT_VIDEO = "/VID-20261020-WA0002(2).mp4";
+export const DEFAULT_VIDEO = "/footer.mp4";
 export const DEFAULT_POSTER = "/bg-poster.jpg";
 
 type Props = {
