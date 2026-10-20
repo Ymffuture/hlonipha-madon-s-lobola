@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import heroVideo from "@/assets/hero-loop.mp4.asset.json";
-import heroPoster from "@/assets/hero-poster.jpg.asset.json";
+// import heroVideo from "@/assets/hero-loop.mp4.asset.json";
+// import heroPoster from "@/assets/hero-poster.jpg.asset.json";
+
+import heroVideo from "@/assets/hero-loop.mp4";
+import heroPoster from "@/assets/hero-poster.jpg";
+
 import type { EventSettings } from "@/lib/event";
 
 export function Hero({ settings }: { settings?: EventSettings | undefined }) {
