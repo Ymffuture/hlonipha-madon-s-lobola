@@ -31,6 +31,13 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
+/** Same rule as the SQL submit_rsvp(): digits only, +27xxxxxxxxx -> 0xxxxxxxxx */
+function normalizePhone(phone: string) {
+  let n = phone.replace(/\D/g, "");
+  if (n.startsWith("27") && n.length === 11) n = "0" + n.slice(2);
+  return n;
+}
+
 type SortKey = "created_at" | "full_name" | "guest_count" | "attendance";
 
 function AdminPage() {
@@ -39,8 +46,10 @@ function AdminPage() {
 
   const role = useQuery({
     queryKey: ["is-admin"],
+    retry: false,
     queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u, error: uErr } = await supabase.auth.getUser();
+      if (uErr) throw uErr;
       if (!u.user) return false;
       const { data, error } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
       if (error) throw error;
@@ -83,16 +92,17 @@ function AdminPage() {
     mutationFn: async (id: string) => {
       const { error, count } = await supabase.from("rsvps").delete({ count: "exact" }).eq("id", id);
       if (error) throw error;
-      if (!count) throw new Error("Not deleted");
+      if (!count) throw new Error("Not deleted (are you signed in as an admin?)");
     },
-    onSuccess: () => { toast.success("RSVP deleted"); qc.invalidateQueries({ queryKey: ["rsvps"] }); },
-    onError: () => toast.error("Could not delete RSVP"),
+    onSuccess: () => { toast.success("RSVP deleted"); setDeleting(null); qc.invalidateQueries({ queryKey: ["rsvps"] }); },
+    onError: (e: Error) => toast.error(`Could not delete RSVP: ${e.message}`),
   });
 
   const save = useMutation({
     mutationFn: async (r: Rsvp) => {
       const { error } = await supabase.from("rsvps").update({
-        full_name: r.full_name, phone: r.phone, email: r.email || null, attendance: r.attendance,
+        full_name: r.full_name.trim(), phone: r.phone.trim(), phone_normalized: normalizePhone(r.phone),
+        email: r.email || null, attendance: r.attendance,
         guest_count: r.attendance === "not_attending" ? 0 : r.guest_count,
         additional_guests: r.additional_guests || null, dietary: r.dietary || null,
         accessibility: r.accessibility || null, message: r.message || null,
@@ -100,7 +110,8 @@ function AdminPage() {
       if (error) throw error;
     },
     onSuccess: () => { toast.success("RSVP updated"); setEditing(null); qc.invalidateQueries({ queryKey: ["rsvps"] }); },
-    onError: () => toast.error("Could not update RSVP"),
+    onError: (e: { code?: string; message?: string }) =>
+      toast.error(e?.code === "23505" ? "Another RSVP already uses that phone number" : `Could not update RSVP${e?.message ? `: ${e.message}` : ""}`),
   });
 
   async function signOut() {
@@ -120,6 +131,20 @@ function AdminPage() {
   }
 
   if (role.isLoading) return <p className="p-10 text-center text-muted-foreground">Checking access…</p>;
+  if (role.isError)
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+        <h1 className="text-3xl">Could not check access</h1>
+        <p className="max-w-md text-muted-foreground">
+          {role.error instanceof Error ? role.error.message : "Unknown error"}. This usually means the database
+          setup has not been run in Supabase yet (see SUPABASE_SETUP.md).
+        </p>
+        <div className="flex gap-2">
+          <button onClick={() => role.refetch()} className="rounded-full border border-input px-6 py-2 text-sm">Try again</button>
+          <button onClick={signOut} className="rounded-full bg-primary px-6 py-2 text-sm text-primary-foreground">Sign out</button>
+        </div>
+      </main>
+    );
   if (!role.data)
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
@@ -164,7 +189,7 @@ function AdminPage() {
 
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         {rsvps.isError ? (
-          <p className="p-6 text-center text-destructive">Could not load RSVPs.</p>
+          <p className="p-6 text-center text-destructive">Could not load RSVPs: {rsvps.error instanceof Error ? rsvps.error.message : "unknown error"}</p>
         ) : rsvps.isLoading ? (
           <p className="p-6 text-center text-muted-foreground">Loading…</p>
         ) : !rows.length ? (
@@ -213,7 +238,7 @@ function AdminPage() {
           {editing && (
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save.mutate(editing); }}>
               {(["full_name", "phone", "email", "additional_guests", "dietary", "accessibility", "message"] as const).map((k) => (
-                <div key={k}><Label>{k.replace("_", " ")}</Label><Input value={editing[k] ?? ""} onChange={(e) => setEditing({ ...editing, [k]: e.target.value })} /></div>
+                <div key={k}><Label className="capitalize">{k.replace(/_/g, " ")}</Label><Input value={editing[k] ?? ""} onChange={(e) => setEditing({ ...editing, [k]: e.target.value })} /></div>
               ))}
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>Status</Label>
@@ -256,7 +281,7 @@ function SettingsEditor() {
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Event details saved"); setS(null); qc.invalidateQueries({ queryKey: ["event-settings"] }); },
-    onError: () => toast.error("Could not save event details"),
+    onError: (e: Error) => toast.error(`Could not save event details: ${e.message}`),
   });
   if (!cur) return null;
   const text = (k: keyof EventSettings, label: string) => (
