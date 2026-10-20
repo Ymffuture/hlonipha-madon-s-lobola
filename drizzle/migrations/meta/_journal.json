@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792466221876,
+      "tag": "0000_lobola_schema",
+      "breakpoints": true
+    }
+  ]
+}
