@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "H & M's Lobola Celebration" },
-      { name: "description", content: "Hlonipha & Madon's traditional Xitsonga Lobola Luncheon invitation." },
+      { name: "description", content: "Hlonipha & Mcdon's traditional Xitsonga Lobola Luncheon invitation." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#4B2A18" },
