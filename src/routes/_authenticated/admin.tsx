@@ -15,6 +15,11 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import { FullPageLoader, MonogramLoader } from "@/components/invite/MonogramLoader";
+import { useLongPress } from "@/hooks/use-long-press";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -73,6 +78,19 @@ function AdminPage() {
   const [viewing, setViewing] = useState<Rsvp | null>(null);
   const [editing, setEditing] = useState<Rsvp | null>(null);
   const [deleting, setDeleting] = useState<Rsvp | null>(null);
+  const [acting, setActing] = useState<Rsvp | null>(null); // long-press action sheet
+
+  /** Close the action sheet first, then open the chosen dialog (avoids two overlays fighting for focus). */
+  function pick(action: "view" | "edit" | "delete") {
+    const r = acting;
+    setActing(null);
+    if (!r) return;
+    setTimeout(() => {
+      if (action === "view") setViewing(r);
+      else if (action === "edit") setEditing({ ...r });
+      else setDeleting(r);
+    }, 120);
+  }
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -130,7 +148,7 @@ function AdminPage() {
     URL.revokeObjectURL(a.href);
   }
 
-  if (role.isLoading) return <p className="p-10 text-center text-muted-foreground">Checking access…</p>;
+  if (role.isLoading) return <FullPageLoader label="Checking access…" />;
   if (role.isError)
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
@@ -174,7 +192,7 @@ function AdminPage() {
         {[["Responses", stats.responses], ["Attending RSVPs", stats.attendingResponses], ["Expected guests", stats.expected], ["Declined", stats.declines], ["Undecided", stats.undecided]].map(([l, v]) => (
           <div key={l} className="rounded-xl border border-border bg-card p-4 shadow-card">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">{l}</p>
-            <p className="mt-1 font-display text-3xl">{rsvps.isLoading ? "…" : v}</p>
+            <p className="mt-1 font-display text-3xl">{rsvps.isLoading ? <span className="inline-block h-8 w-12 animate-pulse rounded bg-secondary align-middle" /> : v}</p>
           </div>
         ))}
       </div>
@@ -191,33 +209,48 @@ function AdminPage() {
         {rsvps.isError ? (
           <p className="p-6 text-center text-destructive">Could not load RSVPs: {rsvps.error instanceof Error ? rsvps.error.message : "unknown error"}</p>
         ) : rsvps.isLoading ? (
-          <p className="p-6 text-center text-muted-foreground">Loading…</p>
+          <div className="flex justify-center p-10"><MonogramLoader size="sm" label="Loading RSVPs…" /></div>
         ) : !rows.length ? (
           <p className="p-6 text-center text-muted-foreground">No RSVPs found.</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-secondary"><tr>{th("full_name", "Name")}<th className="px-3 py-2 text-left font-medium">Phone</th>{th("attendance", "Status")}{th("guest_count", "Guests")}{th("created_at", "Submitted")}<th /></tr></thead>
+            <thead className="bg-secondary"><tr>{th("full_name", "Name")}<th className="px-3 py-2 text-left font-medium">Phone</th>{th("attendance", "Status")}{th("guest_count", "Guests")}{th("created_at", "Submitted")}</tr></thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-border">
-                  <td className="px-3 py-2">{r.full_name}</td>
-                  <td className="px-3 py-2">{r.phone}</td>
-                  <td className="px-3 py-2">{ATTENDANCE_LABELS[r.attendance]}</td>
-                  <td className="px-3 py-2">{r.guest_count}</td>
-                  <td className="px-3 py-2">{new Date(r.created_at).toLocaleDateString("en-ZA")}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right">
-                    <button className="mr-2 text-gold underline" onClick={() => setViewing(r)}>View</button>
-                    <button className="mr-2 underline" onClick={() => setEditing({ ...r })}>Edit</button>
-                    <button className="text-destructive underline" onClick={() => setDeleting(r)}>Delete</button>
-                  </td>
-                </tr>
+                <RsvpRow key={r.id} r={r} onView={() => setViewing(r)} onActions={() => setActing(r)} />
               ))}
             </tbody>
           </table>
         )}
       </div>
 
+      {rows.length > 0 && (
+        <p className="-mt-4 text-center text-xs text-muted-foreground">
+          Tap a guest to view their RSVP. Press and hold (or right-click) for Edit and Delete.
+        </p>
+      )}
+
       <SettingsEditor />
+
+      <Sheet open={!!acting} onOpenChange={(o) => !o && setActing(null)}>
+        <SheetContent side="bottom" className="mx-auto w-full max-w-md rounded-t-2xl pb-8">
+          <SheetHeader>
+            <SheetTitle className="font-display text-2xl">{acting?.full_name}</SheetTitle>
+            <SheetDescription>{acting?.phone} · {acting && ATTENDANCE_LABELS[acting.attendance]}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-5 grid gap-2">
+            <button onClick={() => pick("view")} className="flex items-center gap-3 rounded-xl border border-input px-4 py-3 text-left text-sm transition hover:border-gold">
+              <Eye className="h-4 w-4 text-gold" /> View details
+            </button>
+            <button onClick={() => pick("edit")} className="flex items-center gap-3 rounded-xl border border-input px-4 py-3 text-left text-sm transition hover:border-gold">
+              <Pencil className="h-4 w-4 text-gold" /> Edit RSVP
+            </button>
+            <button onClick={() => pick("delete")} className="flex items-center gap-3 rounded-xl border border-destructive/40 px-4 py-3 text-left text-sm text-destructive transition hover:bg-destructive/10">
+              <Trash2 className="h-4 w-4" /> Delete RSVP
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
         <DialogContent>
@@ -266,6 +299,29 @@ function AdminPage() {
         </AlertDialogContent>
       </AlertDialog>
     </main>
+  );
+}
+
+/** One table row. Tap = view; press-and-hold / right-click / context-menu key = Edit & Delete sheet. */
+function RsvpRow({ r, onView, onActions }: { r: Rsvp; onView: () => void; onActions: () => void }) {
+  const { handlers, pressing, ms } = useLongPress(onActions, onView);
+  return (
+    <tr
+      {...handlers}
+      tabIndex={0}
+      aria-label={`${r.full_name}. Press Enter to view. Press and hold, or use the context menu key, for edit and delete.`}
+      style={{ ["--lp-ms" as string]: `${ms}ms` }}
+      className={cn(
+        "cursor-pointer select-none border-t border-border outline-none transition-colors [-webkit-touch-callout:none] hover:bg-secondary/60 focus-visible:bg-secondary/80 md:select-text",
+        pressing && "lp-pressing",
+      )}
+    >
+      <td className="px-3 py-3 font-medium">{r.full_name}</td>
+      <td className="px-3 py-3">{r.phone}</td>
+      <td className="px-3 py-3">{ATTENDANCE_LABELS[r.attendance]}</td>
+      <td className="px-3 py-3">{r.guest_count}</td>
+      <td className="px-3 py-3">{new Date(r.created_at).toLocaleDateString("en-ZA")}</td>
+    </tr>
   );
 }
 
