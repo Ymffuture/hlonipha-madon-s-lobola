@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { buildInviteIcs } from "@/lib/calendar";
-import { makeRsvpSchema, maskPhone, type EventSettings } from "@/lib/event";
+import { makeRsvpSchema, maskPhone, type Attendance, type EventSettings } from "@/lib/event";
 
 const base = {
   full_name: "Anna Shilenge",
   phone: "0723456789",
   email: "",
-  attendance: "attending" as const,
+  attendance: "attending" as Attendance,
   guest_count: 2,
   additional_guests: "",
   dietary: "",
