@@ -1,5 +1,6 @@
 import { CalendarDays, CalendarPlus, Clock, MapPin, Shirt, Phone, Navigation } from "lucide-react";
-import { formatEventDate, mapsUrl, downloadCalendarInvite, type EventSettings } from "@/lib/event";
+import { formatEventDate, mapsUrl, type EventSettings } from "@/lib/event";
+import { downloadCalendarInvite } from "@/lib/calendar";
 import { Countdown } from "./Countdown";
 import { CountdownBackground } from "./CountdownBackground";
 import { Floral, SectionTitle } from "./Ornament";
