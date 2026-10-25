@@ -56,6 +56,13 @@ export function mapsUrl(venue: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
 }
 
+/** Mask a phone number for the smart RSVP hint, e.g. 0723456789 -> 07******89. */
+export function maskPhone(v: string) {
+  const d = v.replace(/\D/g, "");
+  if (d.length < 6) return "";
+  return `${d.slice(0, 2)}${"*".repeat(Math.max(d.length - 4, 5))}${d.slice(-2)}`;
+}
+
 export const RSVP_ERRORS: Record<string, string> = {
   DUPLICATE_RSVP: "An RSVP with this phone number has already been received. Please contact us if you need to change it.",
   INVALID_NAME: "Please enter your full name.",
