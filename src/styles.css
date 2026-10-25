@@ -177,3 +177,24 @@
 @media (prefers-reduced-motion: reduce) {
   .lp-pressing { animation: none; background-color: color-mix(in oklab, var(--gold) 14%, transparent); }
 }
+
+/* ---- Floating celebration icons (see CelebrationFloaters.tsx) ---- */
+.celebrate-float {
+  position: absolute;
+  bottom: -10%;
+  left: var(--x);
+  opacity: 0;
+  animation: celebrate-rise var(--dur) linear infinite;
+  animation-delay: var(--delay);
+  will-change: transform, opacity;
+}
+@keyframes celebrate-rise {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg) scale(0.8); opacity: 0; }
+  10%  { opacity: 0.85; }
+  50%  { transform: translate3d(var(--sway), -55vh, 0) rotate(180deg) scale(1); }
+  90%  { opacity: 0.7; }
+  100% { transform: translate3d(calc(var(--sway) * -1), -115vh, 0) rotate(360deg) scale(0.9); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-layer { display: none; }
+}
