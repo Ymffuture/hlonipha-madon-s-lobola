@@ -1,43 +1,12 @@
 import { useState } from "react";
-import { z } from "zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Info, Loader2, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { maskPhone, rsvpErrorMessage, type Attendance } from "@/lib/event";
+import { makeRsvpSchema, maskPhone, rsvpErrorMessage, type Attendance } from "@/lib/event";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SectionTitle } from "./Ornament";
-
-const makeSchema = (max: number) =>
-  z
-    .object({
-      full_name: z.string().trim().min(2, "Please enter your full name").max(120),
-      phone: z
-        .string()
-        .trim()
-        .regex(/^[+\d][\d\s()-]{6,19}$/, "Please enter a valid phone number")
-        .refine((v) => v.replace(/\D/g, "").length >= 9, "Please enter a valid phone number"),
-      email: z.union([z.literal(""), z.string().trim().email("Please enter a valid email").max(255)]),
-      attendance: z.enum(["attending", "not_attending", "undecided"], { message: "Please choose your attendance" }),
-      guest_count: z.number().int(),
-      additional_guests: z.string().max(1000),
-      dietary: z.string().max(500),
-      accessibility: z.string().max(500),
-      message: z.string().max(1000),
-    })
-    .refine((d) => d.attendance === "not_attending" || (d.guest_count >= 1 && d.guest_count <= max), {
-      path: ["guest_count"],
-      message: `Choose between 1 and ${max} guests`,
-    })
-    .refine(
-      (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.additional_guests.trim().length >= 2,
-      { path: ["additional_guests"], message: "Additional guest names are required when bringing more than 1 guest" },
-    )
-    .refine(
-      (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.message.trim().length >= 2,
-      { path: ["message"], message: "Please write a short message to the couple" },
-    );
 
 type Errors = Partial<Record<string, string>>;
 
@@ -65,7 +34,7 @@ export function RsvpForm({ maxGuests }: { maxGuests: number }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (status === "saving" || status === "saved") return;
-    const parsed = makeSchema(maxGuests).safeParse(form);
+    const parsed = makeRsvpSchema(maxGuests).safeParse(form);
     if (!parsed.success) {
       const errs: Errors = {};
       for (const i of parsed.error.issues) errs[String(i.path[0])] ??= i.message;
