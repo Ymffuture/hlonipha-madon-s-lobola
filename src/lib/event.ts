@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -56,6 +57,13 @@ export function mapsUrl(venue: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
 }
 
+/** Mask a phone number for the smart RSVP hint, e.g. 0723456789 -> 07******89. */
+export function maskPhone(v: string) {
+  const d = v.replace(/\D/g, "");
+  if (d.length < 6) return "";
+  return `${d.slice(0, 2)}${"*".repeat(Math.max(d.length - 4, 5))}${d.slice(-2)}`;
+}
+
 export const RSVP_ERRORS: Record<string, string> = {
   DUPLICATE_RSVP: "An RSVP with this phone number has already been received. Please contact us if you need to change it.",
   INVALID_NAME: "Please enter your full name.",
@@ -69,6 +77,36 @@ export function rsvpErrorMessage(msg: string | undefined) {
   const key = Object.keys(RSVP_ERRORS).find((k) => msg.includes(k));
   return key ? (RSVP_ERRORS[key] ?? "") : "We couldn't save your RSVP. Please check your connection and try again.";
 }
+
+export const makeRsvpSchema = (max: number) =>
+  z
+    .object({
+      full_name: z.string().trim().min(2, "Please enter your full name").max(120),
+      phone: z
+        .string()
+        .trim()
+        .regex(/^[+\d][\d\s()-]{6,19}$/, "Please enter a valid phone number")
+        .refine((v) => v.replace(/\D/g, "").length >= 9, "Please enter a valid phone number"),
+      email: z.union([z.literal(""), z.string().trim().email("Please enter a valid email").max(255)]),
+      attendance: z.enum(["attending", "not_attending", "undecided"], { message: "Please choose your attendance" }),
+      guest_count: z.number().int(),
+      additional_guests: z.string().max(1000),
+      dietary: z.string().max(500),
+      accessibility: z.string().max(500),
+      message: z.string().max(1000),
+    })
+    .refine((d) => d.attendance === "not_attending" || (d.guest_count >= 1 && d.guest_count <= max), {
+      path: ["guest_count"],
+      message: `Choose between 1 and ${max} guests`,
+    })
+    .refine(
+      (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.additional_guests.trim().length >= 2,
+      { path: ["additional_guests"], message: "Additional guest names are required when bringing more than 1 guest" },
+    )
+    .refine(
+      (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.message.trim().length >= 2,
+      { path: ["message"], message: "Please write a short message to the couple" },
+    );
 
 const csvCell = (v: unknown) => {
   const s = v == null ? "" : String(v);
