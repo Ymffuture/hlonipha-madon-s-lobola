@@ -134,3 +134,46 @@
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* ---- Monogram loader (see MonogramLoader.tsx) ---- */
+.monogram-stroke {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  animation: monogram-draw 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: var(--d, 0s);
+}
+.monogram-diamond {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: monogram-diamond 2.6s ease-in-out infinite;
+  animation-delay: 1s;
+}
+.monogram-glow {
+  filter: drop-shadow(0 4px 14px color-mix(in oklab, var(--gold) 35%, transparent));
+}
+@keyframes monogram-draw {
+  0%   { stroke-dashoffset: 1;  opacity: 0; }
+  8%   { opacity: 1; }
+  45%  { stroke-dashoffset: 0;  opacity: 1; }
+  75%  { stroke-dashoffset: 0;  opacity: 1; }
+  100% { stroke-dashoffset: -1; opacity: 0; }
+}
+@keyframes monogram-diamond {
+  0%, 100% { opacity: 0.25; transform: scale(0.6) rotate(45deg); }
+  50%      { opacity: 1;    transform: scale(1.15) rotate(45deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .monogram-stroke  { animation: none; stroke-dashoffset: 0; opacity: 1; }
+  .monogram-diamond { animation: none; opacity: 1; }
+}
+
+/* ---- Long-press progress fill on table rows (see use-long-press.ts) ---- */
+.lp-pressing {
+  animation: lp-fill var(--lp-ms, 500ms) linear forwards;
+}
+@keyframes lp-fill {
+  from { background-color: transparent; }
+  to   { background-color: color-mix(in oklab, var(--gold) 22%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-pressing { animation: none; background-color: color-mix(in oklab, var(--gold) 14%, transparent); }
+}
