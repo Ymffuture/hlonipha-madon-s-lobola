@@ -179,7 +179,7 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
                   onChange={(e) => { setPhone(e.target.value); setPhoneError(""); }}
                   placeholder="e.g. 072 345 6789"
                   maxLength={20}
-                  autoFocus
+  
                   aria-invalid={!!phoneError}
                   aria-describedby="edit-phone-err"
                 />
