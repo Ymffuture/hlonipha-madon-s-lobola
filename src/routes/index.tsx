@@ -47,7 +47,7 @@ function Index() {
       {data && (
         <>
           <Details settings={data} />
-          <RsvpForm maxGuests={data.max_guests} />
+          <RsvpForm settings={data} />
         </>
       )}
       <Footer settings={data} />

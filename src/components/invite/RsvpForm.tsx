@@ -2,7 +2,8 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Info, Loader2, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { makeRsvpSchema, maskPhone, rsvpErrorMessage, type Attendance } from "@/lib/event";
+import { makeRsvpSchema, maskPhone, rsvpErrorMessage, type Attendance, type EventSettings } from "@/lib/event";
+import { RsvpEditModal } from "./RsvpEditModal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -245,6 +246,8 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
             <li>If your information is not clear for 15 days, your RSVP will be automatically unsaved (removed) from our system.</li>
           </ul>
         </motion.div>
+
+        <RsvpEditModal settings={settings} />
       </div>
     </section>
   );
