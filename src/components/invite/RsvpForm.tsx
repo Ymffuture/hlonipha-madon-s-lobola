@@ -10,7 +10,8 @@ import { SectionTitle } from "./Ornament";
 
 type Errors = Partial<Record<string, string>>;
 
-export function RsvpForm({ maxGuests }: { maxGuests: number }) {
+export function RsvpForm({ settings }: { settings: EventSettings }) {
+  const maxGuests = settings.max_guests;
   const [form, setForm] = useState({
     full_name: "",
     phone: "",

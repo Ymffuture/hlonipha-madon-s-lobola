@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, PencilLine, X } from "lucide-react";
+import { CheckCircle2, Loader2, PencilLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   makeRsvpEditSchema,
