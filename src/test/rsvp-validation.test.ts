@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { buildInviteIcs } from "@/lib/calendar";
-import { makeRsvpSchema, maskPhone, type Attendance, type EventSettings } from "@/lib/event";
+import {
+  guestNamesStatus,
+  makeRsvpSchema,
+  maskPhone,
+  type Attendance,
+  type EventSettings,
+} from "@/lib/event";
 
 const base = {
   full_name: "Anna Shilenge",
@@ -30,8 +36,49 @@ describe("RSVP validation rules", () => {
   });
 
   it("accepts an RSVP for more than one guest when names and message are provided", () => {
-    const r = makeRsvpSchema(5).safeParse({ ...base, additional_guests: "Tsakani, Rhulani", message: "Congratulations!" });
+    const r = makeRsvpSchema(5).safeParse({
+      ...base,
+      guest_count: 3,
+      additional_guests: "Tsakani, Rhulani",
+      message: "Congratulations!",
+    });
     expect(r.success).toBe(true);
+  });
+
+  it("guest count includes you: 3 guests need 2 other names (1 comma between them)", () => {
+    expect(guestNamesStatus(3, "Tsakani, Rhulani")).toEqual({
+      expected: 2,
+      got: 2,
+      state: "complete",
+    });
+    expect(guestNamesStatus(2, "Tsakani")).toEqual({ expected: 1, got: 1, state: "complete" });
+  });
+
+  it("flags too few names as incomplete, with a count in the message", () => {
+    expect(guestNamesStatus(4, "Tsakani, Rhulani").state).toBe("incomplete");
+    const r = makeRsvpSchema(5).safeParse({
+      ...base,
+      guest_count: 4,
+      additional_guests: "Tsakani, Rhulani",
+      message: "Hi",
+    });
+    expect(r.success).toBe(false);
+    if (!r.success)
+      expect(r.error.issues.find((i) => i.path[0] === "additional_guests")?.message).toMatch(
+        /Incomplete: 2 of 3/,
+      );
+  });
+
+  it("flags more names than guests, and ignores stray commas and spaces", () => {
+    expect(guestNamesStatus(2, "Tsakani, Rhulani").state).toBe("too_many");
+    expect(guestNamesStatus(3, " Tsakani ,, Rhulani, ")).toEqual({
+      expected: 2,
+      got: 2,
+      state: "complete",
+    });
+    expect(
+      failingPaths({ ...base, guest_count: 2, additional_guests: "A One, B Two", message: "Hi" }),
+    ).toContain("additional_guests");
   });
 
   it("does not require guest names or a message for a single guest", () => {
