@@ -3,12 +3,13 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, PencilLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  lookupRsvpRpc,
   makeRsvpEditSchema,
   rsvpEditErrorMessage,
-  type Attendance,
+  updateRsvpSelfRpc,
   type RsvpLookup,
 } from "@/lib/rsvp-edit";
-import { ATTENDANCE_LABELS, formatEventDate, type EventSettings } from "@/lib/event";
+import { ATTENDANCE_LABELS, formatEventDate, type Attendance, type EventSettings } from "@/lib/event";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";

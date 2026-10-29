@@ -1,5 +1,47 @@
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 import type { Attendance } from "./event";
+
+/**
+ * The generated database types only know the functions that existed before
+ * this feature (submit_rsvp, has_role), so the two new guest functions are
+ * called through a narrowly-typed wrapper here.
+ */
+type RpcResult<T> = { data: T | null; error: { message: string } | null };
+
+function callRpc<T>(fn: string, args: Record<string, unknown>): PromiseLike<RpcResult<T>> {
+  const rpc = supabase.rpc as unknown as (
+    name: string,
+    a: Record<string, unknown>,
+  ) => PromiseLike<RpcResult<unknown>>;
+  return rpc(fn, args) as PromiseLike<RpcResult<T>>;
+}
+
+export function lookupRsvpRpc(phone: string) {
+  return callRpc<RsvpLookup>("lookup_rsvp", { _phone: phone });
+}
+
+export function updateRsvpSelfRpc(args: {
+  phone: string;
+  attendance: Attendance;
+  guest_count: number;
+  additional_guests: string;
+  dietary: string;
+  accessibility: string;
+  message: string;
+  email: string;
+}) {
+  return callRpc<RsvpLookup>("update_rsvp_self", {
+    _phone: args.phone,
+    _attendance: args.attendance,
+    _guest_count: args.guest_count,
+    _additional_guests: args.additional_guests,
+    _dietary: args.dietary,
+    _accessibility: args.accessibility,
+    _message: args.message,
+    _email: args.email,
+  });
+}
 
 export const EDIT_WINDOW_DAYS = 7;
 
