@@ -142,19 +142,7 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
       </motion.button>
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
-        <DialogContent
-          className="max-h-[88vh] overflow-y-auto rounded-2xl border-border bg-card p-6 shadow-card sm:max-w-lg sm:p-8"
-          hideClose
-        >
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="Close"
-            className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground transition hover:bg-muted"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-
+        <DialogContent className="max-h-[88vh] overflow-y-auto rounded-2xl border-border bg-card p-6 shadow-card sm:max-w-lg sm:p-8">
           {/* Reference code sits at the top of the modal, e.g. HMTG-44863 */}
           {rsvp && (
             <div className="mb-5 text-center">
