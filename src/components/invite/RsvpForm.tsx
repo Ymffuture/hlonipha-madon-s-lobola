@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Info, Loader2, ScrollText } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Info, Loader2, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { makeRsvpSchema, maskPhone, rsvpErrorMessage, type Attendance, type EventSettings } from "@/lib/event";
-import { RsvpEditModal } from "./RsvpEditModal";
+import { guestNamesStatus, makeRsvpSchema, maskPhone, rsvpErrorMessage, type Attendance } from "@/lib/event";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -11,8 +10,7 @@ import { SectionTitle } from "./Ornament";
 
 type Errors = Partial<Record<string, string>>;
 
-export function RsvpForm({ settings }: { settings: EventSettings }) {
-  const maxGuests = settings.max_guests;
+export function RsvpForm({ maxGuests }: { maxGuests: number }) {
   const [form, setForm] = useState({
     full_name: "",
     phone: "",
@@ -87,6 +85,13 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
 
   const attending = form.attendance !== "not_attending";
   const needsGuestNames = attending && form.guest_count > 1;
+  const names = guestNamesStatus(form.guest_count, form.additional_guests);
+  const SAMPLE_NAMES = ["Tsakani", "Rhulani", "Nkateko", "Hlulani", "Vutivi"];
+  const namePlaceholder = names.expected > 0 ? `e.g. ${SAMPLE_NAMES.slice(0, names.expected).join(", ")}` : "";
+  const nameHelp =
+    names.expected === 1
+      ? "Add 1 name (no comma needed)."
+      : `Add ${names.expected} names separated by commas (${names.expected - 1} commas).`;
   const field = "mt-1.5 bg-background";
   const Err = ({ k }: { k: string }) =>
     errors[k] ? (
@@ -157,18 +162,35 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
                 <Err k="guest_count" />
               </div>
               <div>
-                <Label htmlFor="additional_guests">Additional guest names{needsGuestNames ? " *" : ""}</Label>
+                <div className="flex items-baseline justify-between gap-2">
+                  <Label htmlFor="additional_guests">Additional guest names{needsGuestNames ? " *" : ""}</Label>
+                  {needsGuestNames && (
+                    <span
+                      role="status"
+                      aria-live="polite"
+                      className={`flex items-center gap-1 text-xs font-medium ${names.state === "complete" ? "text-gold" : "text-destructive"}`}
+                    >
+                      {names.state === "complete" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
+                      {names.state === "complete" ? `Complete · ${names.got} of ${names.expected}` : names.state === "incomplete" ? `Incomplete · ${names.got} of ${names.expected}` : `Too many · ${names.got} of ${names.expected}`}
+                    </span>
+                  )}
+                </div>
                 <Input
                   id="additional_guests"
                   className={field}
                   value={form.additional_guests}
                   onChange={(e) => set("additional_guests", e.target.value)}
                   maxLength={1000}
-                  placeholder="e.g. Tsakani, Rhulani"
-                  aria-invalid={!!errors["additional_guests"]}
-                  aria-describedby="additional_guests-err"
+                  placeholder={namePlaceholder}
+                  aria-invalid={!!errors["additional_guests"] || (needsGuestNames && names.state !== "complete" && form.additional_guests.trim().length > 0)}
+                  aria-describedby="additional_guests-help additional_guests-err"
                   required={needsGuestNames}
                 />
+                {needsGuestNames && (
+                  <p id="additional_guests-help" className="mt-1 text-xs text-muted-foreground">
+                    {nameHelp}
+                  </p>
+                )}
                 <Err k="additional_guests" />
               </div>
             </div>
@@ -214,7 +236,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
         </motion.form>
 
         <AnimatePresence>
-          {needsGuestNames && !form.additional_guests.trim() && (
+          {needsGuestNames && names.state === "incomplete" && (
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -225,7 +247,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
             >
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
               <p>
-                <span className="font-medium">{maskPhone(form.phone) || "e.g. 07*****82"}</span> — additional guest names are required. Please add them in the form above, or contact the family to have them added.
+                <span className="font-medium">{maskPhone(form.phone) || "e.g. 07*****82"}</span> — {names.got === 0 ? "additional guest names are required" : `guest names are incomplete (${names.got} of ${names.expected} added)`}. Please add them in the form above, or contact the family to have them added.
               </p>
             </motion.div>
           )}
@@ -246,8 +268,6 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
             <li>If your information is not clear for 15 days, your RSVP will be automatically unsaved (removed) from our system.</li>
           </ul>
         </motion.div>
-
-        <RsvpEditModal settings={settings} />
       </div>
     </section>
   );
