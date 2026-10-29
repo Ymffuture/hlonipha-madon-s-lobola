@@ -78,6 +78,26 @@ export function rsvpErrorMessage(msg: string | undefined) {
   return key ? (RSVP_ERRORS[key] ?? "") : "We couldn't save your RSVP. Please check your connection and try again.";
 }
 
+/** Split "Tsakani, Rhulani" into trimmed, non-empty names (names are separated by commas). */
+export const parseGuestNames = (text: string) =>
+  text
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+/** guest_count includes the person filling in the form, so they list guest_count - 1 other people. */
+export const expectedGuestNames = (guestCount: number) => Math.max(0, guestCount - 1);
+
+export type GuestNamesState = "complete" | "incomplete" | "too_many";
+
+/** How many names are expected vs typed, and whether the list is complete. */
+export function guestNamesStatus(guestCount: number, text: string) {
+  const expected = expectedGuestNames(guestCount);
+  const got = parseGuestNames(text).length;
+  const state: GuestNamesState = got < expected ? "incomplete" : got > expected ? "too_many" : "complete";
+  return { expected, got, state };
+}
+
 export const makeRsvpSchema = (max: number) =>
   z
     .object({
@@ -99,10 +119,18 @@ export const makeRsvpSchema = (max: number) =>
       path: ["guest_count"],
       message: `Choose between 1 and ${max} guests`,
     })
-    .refine(
-      (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.additional_guests.trim().length >= 2,
-      { path: ["additional_guests"], message: "Additional guest names are required when bringing more than 1 guest" },
-    )
+    .superRefine((d, ctx) => {
+      if (d.attendance === "not_attending" || d.guest_count <= 1) return;
+      const { expected, got, state } = guestNamesStatus(d.guest_count, d.additional_guests);
+      if (state === "complete") return;
+      const message =
+        got === 0
+          ? "Additional guest names are required when bringing more than 1 guest"
+          : state === "incomplete"
+            ? `Incomplete: ${got} of ${expected} names. Add ${expected - got} more, separated by commas.`
+            : `You listed ${got} names but chose ${d.guest_count} guests (including you). Remove a name or raise the guest count.`;
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["additional_guests"], message });
+    })
     .refine(
       (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.message.trim().length >= 2,
       { path: ["message"], message: "Please write a short message to the couple" },
