@@ -198,3 +198,64 @@
 @media (prefers-reduced-motion: reduce) {
   .celebrate-layer { display: none; }
 }
+
+/* ---- Hero button animations (see Hero.tsx) ---- */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, white 40%, transparent), transparent);
+  transform: translateX(-140%) skewX(-18deg);
+  animation: btn-sheen 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes btn-sheen {
+  0%, 55% { transform: translateX(-140%) skewX(-18deg); }
+  75%, 100% { transform: translateX(280%) skewX(-18deg); }
+}
+.pulse-ring {
+  animation: pulse-ring 2.6s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 45%, transparent); }
+  70%  { box-shadow: 0 0 0 14px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ---- Typewriter caret (see Motion.tsx) ---- */
+.tw-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.08em;
+  background: var(--gold);
+  animation: caret-blink 1s steps(1) infinite;
+}
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
+
+/* ---- Gentle sway for the blooming flower ornaments (see Ornament.tsx) ---- */
+.floral-sway {
+  transform-origin: center;
+  animation: floral-sway 9s ease-in-out infinite;
+}
+@keyframes floral-sway {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50%      { transform: rotate(2.5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-shine::after,
+  .pulse-ring,
+  .floral-sway,
+  .tw-caret { animation: none; }
+}
