@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, PencilLine } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   lookupRsvpRpc,
   makeRsvpEditSchema,
@@ -16,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { MonogramLoader } from "./MonogramLoader";
 
-type Step = "phone" | "loading" | "loaded" | "saving" | "saved";
+type Step = "phone" | "loading" | "loaded" | "saved";
 
 const initialEdit = {
   email: "",
@@ -39,6 +38,7 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [rsvp, setRsvp] = useState<RsvpLookup | null>(null);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(initialEdit);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [serverError, setServerError] = useState("");
@@ -48,6 +48,7 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
     setPhone("");
     setPhoneError("");
     setRsvp(null);
+    setSaving(false);
     setForm(initialEdit);
     setErrors({});
     setServerError("");
@@ -67,13 +68,13 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
     setPhoneError("");
     setServerError("");
     setStep("loading");
-    const { data, error } = await supabase.rpc("lookup_rsvp", { _phone: phone });
+    const { data, error } = await lookupRsvpRpc(phone);
     if (error || !data) {
       setServerError(rsvpEditErrorMessage(error?.message));
       setStep("phone");
       return;
     }
-    const row = data as unknown as RsvpLookup;
+    const row = data;
     setRsvp(row);
     setForm({
       email: row.email ?? "",
@@ -89,7 +90,7 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!rsvp || step === "saving") return;
+    if (!rsvp || saving) return;
     const parsed = makeRsvpEditSchema(settings.max_guests).safeParse(form);
     if (!parsed.success) {
       const errs: Partial<Record<string, string>> = {};
@@ -98,24 +99,25 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
       return;
     }
     const d = parsed.data;
-    setStep("saving");
+    setSaving(true);
     setServerError("");
-    const { data, error } = await supabase.rpc("update_rsvp_self", {
-      _phone: phone,
-      _attendance: d.attendance,
-      _guest_count: d.attendance === "not_attending" ? 0 : d.guest_count,
-      _additional_guests: d.additional_guests,
-      _dietary: d.dietary,
-      _accessibility: d.accessibility,
-      _message: d.message,
-      _email: d.email,
+    const { data, error } = await updateRsvpSelfRpc({
+      phone,
+      attendance: d.attendance,
+      guest_count: d.attendance === "not_attending" ? 0 : d.guest_count,
+      additional_guests: d.additional_guests,
+      dietary: d.dietary,
+      accessibility: d.accessibility,
+      message: d.message,
+      email: d.email,
     });
     if (error || !data) {
       setServerError(rsvpEditErrorMessage(error?.message));
-      setStep("loaded");
+      setSaving(false);
       return;
     }
-    setRsvp(data as unknown as RsvpLookup);
+    setRsvp(data);
+    setSaving(false);
     setStep("saved");
   }
 
@@ -338,9 +340,9 @@ export function RsvpEditModal({ settings }: { settings: EventSettings }) {
                     <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{serverError}</p>
                   )}
 
-                  <button type="submit" disabled={step === "saving"} className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm uppercase tracking-[0.2em] text-primary-foreground transition hover:brightness-110 disabled:opacity-60">
-                    {step === "saving" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                    {step === "saving" ? "Saving…" : "Save changes"}
+                  <button type="submit" disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm uppercase tracking-[0.2em] text-primary-foreground transition hover:brightness-110 disabled:opacity-60">
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                    {saving ? "Saving…" : "Save changes"}
                   </button>
                 </form>
               )}
