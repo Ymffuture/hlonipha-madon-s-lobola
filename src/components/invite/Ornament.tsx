@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const VIEW = { once: true, margin: "-40px" } as const;
 
 /**

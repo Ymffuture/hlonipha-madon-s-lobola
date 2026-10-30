@@ -7,6 +7,7 @@ import { Details } from "@/components/invite/Details";
 import { RsvpForm } from "@/components/invite/RsvpForm";
 import { Footer } from "@/components/invite/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AmbientSound } from "@/components/invite/AmbientSound";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,6 +52,7 @@ function Index() {
         </>
       )}
       <Footer settings={data} />
+      <AmbientSound />
     </main>
   );
 }

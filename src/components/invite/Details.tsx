@@ -4,7 +4,7 @@ import { downloadCalendarInvite } from "@/lib/calendar";
 import { Countdown } from "./Countdown";
 import { CountdownBackground } from "./CountdownBackground";
 import { Floral, SectionTitle } from "./Ornament";
-import { FadeIn } from "./Motion";
+import { FadeIn, Typewriter } from "./Motion";
 
 export function Details({ settings }: { settings: EventSettings }) {
   const { date, time } = formatEventDate(settings.event_datetime);
@@ -22,7 +22,7 @@ export function Details({ settings }: { settings: EventSettings }) {
         <Floral className="absolute bottom-10 right-4 h-24 w-24 opacity-40 sm:h-32 sm:w-32" />
         <FadeIn className="mx-auto max-w-2xl text-center">
           <SectionTitle eyebrow="United by Love, Joined by Family" title="Love, Family & Tradition" />
-          <p className="whitespace-pre-line font-display text-xl leading-relaxed text-foreground/90 sm:text-2xl">{settings.welcome_message}</p>
+          <Typewriter text={settings.welcome_message} className="block whitespace-pre-line font-display text-xl leading-relaxed text-foreground/90 sm:text-2xl" />
           <p className="mt-8 font-script text-4xl text-gold">{settings.couple_names}</p>
         </FadeIn>
       </section>
