@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { EventSettings } from "@/lib/event";
 import { VideoBackground } from "./VideoBackgroundfooter";
+import { VisitorCounter } from "./VisitorCounter";
 
 export function Footer({ settings }: { settings?: EventSettings | undefined }) {
   return (
@@ -17,7 +18,8 @@ export function Footer({ settings }: { settings?: EventSettings | undefined }) {
             RSVP enquiries: {settings.rsvp_contact}
           </a>
         )}
-        <div className="mt-10">
+        <VisitorCounter className="mt-10" />
+        <div className="mt-6">
           <Link to="/admin" className="text-[11px] uppercase tracking-[0.3em] text-beige/60 hover:text-beige">Admin</Link>
         </div>
       </div>
