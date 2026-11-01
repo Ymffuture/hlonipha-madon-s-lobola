@@ -48,7 +48,8 @@ export function trackVisit(): Promise<VisitStats | null> {
 
   inflight = (async () => {
     if (alreadyCounted || isBot) {
-      const { data } = await callRpc<VisitStats>("get_visit_stats");
+      const { data, error } = await callRpc<VisitStats>("get_visit_stats");
+      if (error) console.warn("[visits] get_visit_stats failed:", error.message);
       return data;
     }
     const isNewVisitor = safeGet(window.localStorage, VISITOR_KEY) === null;
@@ -56,10 +57,22 @@ export function trackVisit(): Promise<VisitStats | null> {
     const { data, error } = await callRpc<VisitStats>("record_visit", {
       _new_visitor: isNewVisitor,
     });
-    if (error) return null;
+    if (error) {
+      // Not counted, so let the next page load try again instead of waiting for a new session.
+      console.warn("[visits] record_visit failed:", error.message);
+      try {
+        window.sessionStorage.removeItem(SESSION_KEY);
+      } catch {
+        /* ignore */
+      }
+      return null;
+    }
     safeSet(window.localStorage, VISITOR_KEY, "1");
     return data;
-  })().catch(() => null);
+  })().catch((e) => {
+    console.warn("[visits] unexpected error:", e);
+    return null;
+  });
 
   return inflight;
 }
