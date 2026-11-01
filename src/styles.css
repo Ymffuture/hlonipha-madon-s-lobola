@@ -259,3 +259,22 @@
   .floral-sway,
   .tw-caret { animation: none; }
 }
+.tw-caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 1em;
+  margin-left: 0.06em;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: tw-blink 1s steps(2, start) infinite;
+}
+
+@keyframes tw-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-caret { animation: none; opacity: 1; }
+}
+
