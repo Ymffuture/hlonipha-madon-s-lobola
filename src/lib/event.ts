@@ -13,6 +13,17 @@ export const ATTENDANCE_LABELS: Record<Attendance, string> = {
   undecided: "Undecided",
 };
 
+export const ARRIVAL_OPTIONS = ["early", "on_time", "late"] as const;
+export type Arrival = (typeof ARRIVAL_OPTIONS)[number];
+
+export const ARRIVAL_LABELS: Record<Arrival, string> = {
+  early: "Earlier than the start time",
+  on_time: "On time",
+  late: "A bit late (up to 1 hour)",
+};
+
+export const arrivalLabel = (v: string | null | undefined) => (v ? (ARRIVAL_LABELS[v as Arrival] ?? v) : "");
+
 export const eventSettingsQuery = () =>
   queryOptions({
     queryKey: ["event-settings"],
@@ -70,6 +81,7 @@ export const RSVP_ERRORS: Record<string, string> = {
   INVALID_PHONE: "Please enter a valid phone number.",
   INVALID_EMAIL: "Please enter a valid email address.",
   INVALID_GUEST_COUNT: "Please choose a valid number of guests.",
+  INVALID_ARRIVAL: "Please choose when you plan to arrive.",
 };
 
 export function rsvpErrorMessage(msg: string | undefined) {
@@ -107,13 +119,14 @@ export const makeRsvpSchema = (max: number) =>
         .trim()
         .regex(/^[+\d][\d\s()-]{6,19}$/, "Please enter a valid phone number")
         .refine((v) => v.replace(/\D/g, "").length >= 9, "Please enter a valid phone number"),
-      email: z.union([z.literal(""), z.string().trim().email("Please enter a valid email").max(255)]),
+      email: z.string().trim().min(1, "Please enter your email address").email("Please enter a valid email").max(255),
       attendance: z.enum(["attending", "not_attending", "undecided"], { message: "Please choose your attendance" }),
       guest_count: z.number().int(),
       additional_guests: z.string().max(1000),
       dietary: z.string().max(500),
       accessibility: z.string().max(500),
-      message: z.string().max(1000),
+      message: z.string().trim().min(2, "Please write a short message to the couple").max(1000),
+      arrival_time: z.enum(["", ...ARRIVAL_OPTIONS]),
     })
     .refine((d) => d.attendance === "not_attending" || (d.guest_count >= 1 && d.guest_count <= max), {
       path: ["guest_count"],
@@ -131,10 +144,10 @@ export const makeRsvpSchema = (max: number) =>
             : `You listed ${got} names but chose ${d.guest_count} guests (including you). Remove a name or raise the guest count.`;
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["additional_guests"], message });
     })
-    .refine(
-      (d) => d.attendance === "not_attending" || d.guest_count <= 1 || d.message.trim().length >= 2,
-      { path: ["message"], message: "Please write a short message to the couple" },
-    );
+    .refine((d) => d.attendance !== "attending" || d.arrival_time !== "", {
+      path: ["arrival_time"],
+      message: "Please tell us when you plan to arrive",
+    });
 
 const csvCell = (v: unknown) => {
   const s = v == null ? "" : String(v);
@@ -143,9 +156,9 @@ const csvCell = (v: unknown) => {
 };
 
 export function rsvpsToCsv(rows: Rsvp[]) {
-  const headers = ["Full name", "Phone", "Email", "Attendance", "Guests", "Additional guests", "Dietary", "Accessibility", "Message", "Submitted", "Updated"];
+  const headers = ["Full name", "Phone", "Email", "Attendance", "Arrival", "Guests", "Additional guests", "Dietary", "Accessibility", "Message", "Submitted", "Updated"];
   const lines = rows.map((r) =>
-    [r.full_name, r.phone, r.email, ATTENDANCE_LABELS[r.attendance], r.guest_count, r.additional_guests, r.dietary, r.accessibility, r.message, r.created_at, r.updated_at]
+    [r.full_name, r.phone, r.email, ATTENDANCE_LABELS[r.attendance], arrivalLabel(r.arrival_time), r.guest_count, r.additional_guests, r.dietary, r.accessibility, r.message, r.created_at, r.updated_at]
       .map(csvCell)
       .join(","),
   );
