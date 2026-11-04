@@ -37,7 +37,7 @@ function toIcsLocalDateTime(localInput: string, field: string): string {
     throw new Error(`Calendar invite: "${field}" is not a local datetime (got "${localInput}").`);
   }
   // Reject impossible dates like 2026-02-31 before emitting them.
-  const [y, mo, d, h, mi] = [m[1], m[2], m[3], m[4], m[5]].map(Number);
+  const [y, mo, d, h, mi] = [m[1], m[2], m[3], m[4], m[5]].map(Number) as [number, number, number, number, number];
   const probe = new Date(Date.UTC(2_000, mo - 1, d, h, mi));
   const valid =
     probe.getUTCMonth() === mo - 1 &&

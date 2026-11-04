@@ -4,6 +4,7 @@ import { motion, useReducedMotion, type MotionStyle } from "framer-motion";
 import { Typewriter } from "./Motion";
 import { Flourish } from "./Ornament";
 import { VideoBackground } from "./VideoBackground";
+import { HeroTopBar } from "./HeroTopBar";
 
 /** How long the closed curtain is shown before it opens by itself (ms). */
 const AUTO_OPEN_DELAY = 1800;
@@ -114,6 +115,7 @@ export function Hero({ settings }: { settings?: EventSettings | undefined }) {
 
   return (
     <header className="relative flex min-h-[100svh] items-center justify-center overflow-hidden">
+      <HeroTopBar />
       <VideoBackground src={settings?.hero_video_url} />
       <div className="hero-overlay absolute inset-0" />
 

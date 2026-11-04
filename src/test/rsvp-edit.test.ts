@@ -33,7 +33,7 @@ describe("edit form rules", () => {
       additional_guests: "  ", dietary: "", accessibility: "", message: "Congratulations!",
     });
     expect(parsed.success).toBe(false);
-    if (!parsed.success) expect(parsed.error.issues[0].path[0]).toBe("additional_guests");
+    if (!parsed.success) expect(parsed.error.issues[0]!.path[0]).toBe("additional_guests");
   });
 
   it("requires a message to the couple when bringing more than 1 guest", () => {
@@ -42,7 +42,7 @@ describe("edit form rules", () => {
       additional_guests: "Tsakani", dietary: "", accessibility: "", message: " ",
     });
     expect(parsed.success).toBe(false);
-    if (!parsed.success) expect(parsed.error.issues[0].path[0]).toBe("message");
+    if (!parsed.success) expect(parsed.error.issues[0]!.path[0]).toBe("message");
   });
 
   it("accepts a single attending guest with no names or message", () => {
