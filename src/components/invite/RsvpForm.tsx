@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, Check, CheckCircle2, Clock, Info, Loader2, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,45 @@ import { Label } from "@/components/ui/label";
 import { SectionTitle } from "./Ornament";
 
 type Errors = Partial<Record<string, string>>;
+
+type FloatingInputProps = ComponentProps<typeof Input> & { label: string };
+function FloatingInput({ label, className = "", ...props }: FloatingInputProps) {
+  return (
+    <div className="relative">
+      <Input
+        {...props}
+        placeholder=" "
+        className={`peer h-12 rounded-xl border-border/70 bg-background/65 px-4 pt-3 pb-1 text-[15px] shadow-[inset_0_1px_2px_hsl(var(--foreground)/0.035),0_1px_2px_hsl(var(--foreground)/0.025)] backdrop-blur-sm transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-transparent hover:border-gold/50 focus-visible:border-gold focus-visible:ring-2 focus-visible:ring-gold/20 [&:-webkit-autofill]:[-webkit-text-fill-color:hsl(var(--foreground))] [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_hsl(var(--background))_inset] ${className}`}
+      />
+      <Label
+        htmlFor={props.id}
+        className="pointer-events-none absolute left-3 top-0 z-10 -translate-y-1/2 bg-background px-1 text-xs text-muted-foreground transition-all duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:scale-100 peer-focus:top-0 peer-focus:text-xs peer-focus:scale-100 peer-focus:text-gold"
+      >
+        {label}
+      </Label>
+    </div>
+  );
+}
+
+type FloatingTextareaProps = ComponentProps<typeof Textarea> & { label: string };
+function FloatingTextarea({ label, className = "", ...props }: FloatingTextareaProps) {
+  return (
+    <div className="relative">
+      <Textarea
+        {...props}
+        placeholder=" "
+        className={`peer min-h-[88px] rounded-xl border-border/70 bg-background/65 px-4 pt-5 pb-3 text-[15px] shadow-[inset_0_1px_2px_hsl(var(--foreground)/0.035),0_1px_2px_hsl(var(--foreground)/0.025)] backdrop-blur-sm transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-transparent hover:border-gold/50 focus-visible:border-gold focus-visible:ring-2 focus-visible:ring-gold/20 [&:-webkit-autofill]:[-webkit-text-fill-color:hsl(var(--foreground))] [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_hsl(var(--background))_inset] ${className}`}
+      />
+      <Label
+        htmlFor={props.id}
+        className="pointer-events-none absolute left-3 top-0 z-10 -translate-y-1/2 bg-background px-1 text-xs text-muted-foreground transition-all duration-200 peer-placeholder-shown:top-5 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:text-xs peer-focus:text-gold"
+      >
+        {label}
+      </Label>
+    </div>
+  );
+}
+
 
 const ARRIVAL_TEXT: Record<Arrival, { title: string; hint: (start: string | null) => string }> = {
   early: { title: "Earlier", hint: (t) => (t ? `Before ${t}` : "Before the start time") },
@@ -113,7 +152,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
       ? "Add 1 name (no comma needed)."
       : `Add ${names.expected} names separated by commas (${names.expected - 1} commas).`;
   const startTime = settings.event_datetime ? formatEventDate(settings.event_datetime).time : null;
-  const field = "mt-1.5 bg-background";
+
   const Err = ({ k }: { k: string }) =>
     errors[k] ? (
       <p id={`${k}-err`} className="mt-1 text-sm text-destructive">
@@ -122,7 +161,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
     ) : null;
 
   return (
-    <section id="rsvp" className="scroll-mt-4 bg-secondary px-6 py-24">
+    <section id="rsvp" className="scroll-mt-4 bg-transparent px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-2xl">
         <SectionTitle eyebrow="Kindly respond" title="RSVP" />
         <motion.form
@@ -132,23 +171,20 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-10"
+          className="space-y-6 rounded-[1.75rem] border border-border/50 bg-card/55 p-5 shadow-[0_18px_60px_-35px_hsl(var(--foreground)/0.22)] backdrop-blur-xl sm:p-9"
         >
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <Label htmlFor="full_name">Full name *</Label>
-              <Input id="full_name" autoComplete="name" className={field} value={form.full_name} onChange={(e) => set("full_name", e.target.value)} aria-invalid={!!errors["full_name"]} aria-describedby="full_name-err" maxLength={120} required />
+              <FloatingInput id="full_name" label="Full name *" autoComplete="name" value={form.full_name} onChange={(e) => set("full_name", e.target.value)} aria-invalid={!!errors["full_name"]} aria-describedby="full_name-err" maxLength={120} required />
               <Err k="full_name" />
             </div>
             <div>
-              <Label htmlFor="phone">Phone number *</Label>
-              <Input id="phone" type="tel" autoComplete="tel" className={field} value={form.phone} onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors["phone"]} aria-describedby="phone-err" maxLength={20} required />
+              <FloatingInput id="phone" label="Phone number *" type="tel" autoComplete="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors["phone"]} aria-describedby="phone-err" maxLength={20} required />
               <Err k="phone" />
             </div>
           </div>
           <div>
-            <Label htmlFor="email">Email *</Label>
-            <Input id="email" type="email" autoComplete="email" className={field} value={form.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors["email"]} aria-describedby="email-err" maxLength={255} required />
+            <FloatingInput id="email" label="Email *" type="email" autoComplete="email" value={form.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors["email"]} aria-describedby="email-err" maxLength={255} required />
             <Err k="email" />
           </div>
 
@@ -175,7 +211,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
             <div className="space-y-5">
               <div className="sm:max-w-xs">
                 <Label htmlFor="guest_count">Number of guests (incl. you)</Label>
-                <select id="guest_count" className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.guest_count} onChange={(e) => set("guest_count", Number(e.target.value))}>
+                <select id="guest_count" className="mt-1.5 h-12 w-full rounded-xl border border-border/70 bg-background/65 px-4 text-sm shadow-sm transition hover:border-gold/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/20" value={form.guest_count} onChange={(e) => set("guest_count", Number(e.target.value))}>
                   {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>{n}</option>
                   ))}
@@ -208,17 +244,17 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
                         {names.state === "complete" ? `Complete · ${names.got} of ${names.expected}` : names.state === "incomplete" ? `Incomplete · ${names.got} of ${names.expected}` : `Too many · ${names.got} of ${names.expected}`}
                       </span>
                     </div>
-                    <Input
+                    <FloatingInput
                       id="additional_guests"
-                      className={field}
+                      label="Additional guest names *"
                       value={form.additional_guests}
                       onChange={(e) => set("additional_guests", e.target.value)}
                       maxLength={1000}
-                      placeholder={namePlaceholder}
                       aria-invalid={!!errors["additional_guests"] || (names.state !== "complete" && form.additional_guests.trim().length > 0)}
                       aria-describedby="additional_guests-help additional_guests-err"
                       required
                     />
+                    <p className="mt-1 text-xs text-muted-foreground">Example: {namePlaceholder}</p>
                     <p id="additional_guests-help" className="mt-1 text-xs text-muted-foreground">
                       {nameHelp}
                     </p>
@@ -251,24 +287,20 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <Label htmlFor="dietary">Dietary requirements (optional)</Label>
-              <Textarea id="dietary" className={field} rows={2} value={form.dietary} onChange={(e) => set("dietary", e.target.value)} maxLength={500} />
+              <FloatingTextarea id="dietary" label="Dietary requirements (optional)" rows={2} value={form.dietary} onChange={(e) => set("dietary", e.target.value)} maxLength={500} />
             </div>
             <div>
-              <Label htmlFor="accessibility">Accessibility requirements (optional)</Label>
-              <Textarea id="accessibility" className={field} rows={2} value={form.accessibility} onChange={(e) => set("accessibility", e.target.value)} maxLength={500} />
+              <FloatingTextarea id="accessibility" label="Accessibility requirements (optional)" rows={2} value={form.accessibility} onChange={(e) => set("accessibility", e.target.value)} maxLength={500} />
             </div>
           </div>
           <div>
-            <Label htmlFor="message">Message to the couple *</Label>
-            <Textarea
+            <FloatingTextarea
               id="message"
-              className={field}
+              label="Message to the couple *"
               rows={3}
               value={form.message}
               onChange={(e) => set("message", e.target.value)}
               maxLength={1000}
-              placeholder="Write a few kind words for the couple…"
               aria-invalid={!!errors["message"]}
               aria-describedby="message-err"
               required
