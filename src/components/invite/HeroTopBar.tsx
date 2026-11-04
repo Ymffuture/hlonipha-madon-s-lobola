@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TIMEZONE } from "@/lib/event";
 
@@ -20,71 +20,180 @@ const dateFmt = new Intl.DateTimeFormat("en-ZA", {
   year: "numeric",
 });
 
-/** Hour/minute/second hands as degrees on a 0–360 dial. */
-function handAngles(d: Date, tzOffsetMinutes: number) {
-  const local = new Date(d.getTime() + tzOffsetMinutes * 60_000);
+/** Fixed UTC+2 (South Africa has no DST) — see TIMEZONE docs in lib/event. */
+const TZ_OFFSET_MINUTES = 120;
+
+type Angles = { hour: number; minute: number; second: number };
+
+/** The classic "10:10" pose the hands start in, before sweeping round to the real time. */
+const START_POSE: Angles = { hour: 305, minute: 60, second: 0 };
+
+/** Angles (0–360) of each hand, plus the Johannesburg hour for the day/night icon. */
+function handAngles(d: Date) {
+  const local = new Date(d.getTime() + TZ_OFFSET_MINUTES * 60_000);
   const h = local.getUTCHours();
   const m = local.getUTCMinutes();
   const s = local.getUTCSeconds();
   return {
-    hour: ((h % 12) + m / 60) * 30,
+    hour: ((h % 12) + m / 60 + s / 3600) * 30,
     minute: (m + s / 60) * 6,
     second: s * 6,
-    raw: { h, m, s },
+    h,
   };
 }
 
-/** Fixed UTC+2 (South Africa has no DST) — see TIMEZONE docs in lib/event. */
-const TZ_OFFSET_MINUTES = 120;
+/**
+ * Makes an angle keep growing (…354° → 360° → 366°…) instead of wrapping back to 0°.
+ * Without this the hand would spin the long way round, backwards, every time it passes 12.
+ */
+function unwrap(prev: number, next: number) {
+  let a = next + Math.floor(prev / 360) * 360;
+  while (a < prev - 0.001) a += 360;
+  return a;
+}
 
-function AnimatedClock({ now, reduce }: { now: Date | null; reduce: boolean }) {
-  const { hour, minute, second } = handAngles(now ?? new Date(), TZ_OFFSET_MINUTES);
-  const tick = { duration: 0.35, ease: [0.34, 1.3, 0.64, 1] as const };
-  const t = reduce ? { duration: 0.01 } : tick;
+/** One hand: a group rotated around the dial centre (22, 22) with a CSS transition. */
+function Hand({ deg, transition, children }: { deg: number; transition: string; children: ReactNode }) {
+  return (
+    <g style={{ transformBox: "view-box", transformOrigin: "22px 22px", transform: `rotate(${deg}deg)`, transition }}>
+      {children}
+    </g>
+  );
+}
+
+function AnimatedClock({ angles, hour24, settled, reduce }: { angles: Angles; hour24: number | null; settled: boolean; reduce: boolean }) {
+  const uid = useId().replace(/:/g, "");
+  const isDay = hour24 !== null && hour24 >= 6 && hour24 < 18;
+
+  // First move: a slow, graceful sweep from 10:10 to the real time.
+  // After that: crisp quartz "ticks" with a tiny overshoot, like a real second hand.
+  const hourT = reduce ? "none" : settled ? "transform 1s linear" : "transform 1.4s cubic-bezier(.22,1,.36,1)";
+  const minuteT = reduce ? "none" : settled ? "transform .5s cubic-bezier(.34,1.4,.64,1)" : "transform 1.4s cubic-bezier(.22,1,.36,1)";
+  const secondT = reduce ? "none" : settled ? "transform .34s cubic-bezier(.34,1.7,.64,1)" : "transform 1.4s cubic-bezier(.22,1,.36,1)";
 
   return (
-    <svg viewBox="0 0 44 44" className="h-10 w-10 shrink-0 sm:h-11 sm:w-11" aria-hidden="true">
-      {/* Face: soft glass ring over the video */}
-      <circle cx="22" cy="22" r="20" fill="rgb(0 0 0 / .35)" stroke="var(--gold)" strokeWidth="1.4" />
-      <circle cx="22" cy="22" r="16.5" fill="none" stroke="color-mix(in oklab, var(--ivory) 35%, transparent)" strokeWidth="0.6" />
-      {/* Hour markers */}
-      {[0, 90, 180, 270].map((deg) => (
-        <line
-          key={deg}
-          x1="22" y1="8.5" x2="22" y2="11"
-          stroke="var(--gold)" strokeWidth="1.4"
-          transform={`rotate(${deg} 22 22)`}
-        />
-      ))}
-      {/* Hands — rotate live from the Johannesburg clock */}
-      <motion.line
-        x1="22" y1="22" x2="22" y2="13.5" stroke="var(--ivory)" strokeWidth="1.8" strokeLinecap="round"
-        style={{ transformBox: "fill-box", transformOrigin: "bottom center" }}
-        animate={{ rotate: hour }} transition={t}
-      />
-      <motion.line
-        x1="22" y1="22" x2="22" y2="9.5" stroke="var(--ivory)" strokeWidth="1.2" strokeLinecap="round"
-        style={{ transformBox: "fill-box", transformOrigin: "bottom center" }}
-        animate={{ rotate: minute }} transition={t}
-      />
-      <motion.line
-        x1="22" y1="24" x2="22" y2="8" stroke="var(--gold)" strokeWidth="0.8" strokeLinecap="round"
-        style={{ transformBox: "fill-box", transformOrigin: "center bottom" }}
-        animate={{ rotate: second }} transition={t}
-      />
-      <circle cx="22" cy="22" r="1.6" fill="var(--gold)" />
+    <svg viewBox="0 0 44 44" className="h-11 w-11 shrink-0 sm:h-12 sm:w-12" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${uid}-bezel`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" style={{ stopColor: "var(--beige)" }} />
+          <stop offset=".45" style={{ stopColor: "var(--gold)" }} />
+          <stop offset="1" style={{ stopColor: "color-mix(in oklab, var(--gold) 55%, black)" }} />
+        </linearGradient>
+        <radialGradient id={`${uid}-face`} cx=".38" cy=".3" r=".85">
+          <stop offset="0" stopColor="rgb(255 255 255 / .22)" />
+          <stop offset=".55" stopColor="rgb(0 0 0 / .28)" />
+          <stop offset="1" stopColor="rgb(0 0 0 / .5)" />
+        </radialGradient>
+        <filter id={`${uid}-shadow`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy=".7" stdDeviation=".5" floodColor="#000" floodOpacity=".55" />
+        </filter>
+        <mask id={`${uid}-moon`}>
+          <rect width="44" height="44" fill="white" />
+          <circle cx="23.3" cy="29.9" r="2.1" fill="black" />
+        </mask>
+      </defs>
+
+      {/* Bezel + glass face */}
+      <circle cx="22" cy="22" r="20.6" fill={`url(#${uid}-bezel)`} />
+      <circle cx="22" cy="22" r="19" fill={`url(#${uid}-face)`} />
+      <circle cx="22" cy="22" r="19" fill="rgb(40 25 15 / .45)" />
+      {/* Glass highlight */}
+      <path d="M8.5 15.5A15 15 0 0 1 22 7" fill="none" stroke="rgb(255 255 255 / .35)" strokeWidth="1.1" strokeLinecap="round" />
+
+      {/* Hour markers: long at 12/3/6/9, short for the rest */}
+      {Array.from({ length: 12 }, (_, i) => {
+        const major = i % 3 === 0;
+        return (
+          <line
+            key={i}
+            x1="22"
+            y1={major ? 4.8 : 5.4}
+            x2="22"
+            y2={major ? 8.4 : 7}
+            stroke={major ? "var(--gold)" : "color-mix(in oklab, var(--ivory) 70%, transparent)"}
+            strokeWidth={major ? 1.5 : 0.8}
+            strokeLinecap="round"
+            transform={`rotate(${i * 30} 22 22)`}
+          />
+        );
+      })}
+
+      {/* Little sun / moon: tells you at a glance if it is day or night in South Africa */}
+      {hour24 !== null && (
+        <motion.g
+          key={isDay ? "day" : "night"}
+          initial={reduce ? false : { opacity: 0, scale: 0.4 }}
+          animate={{ opacity: 0.95, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transformBox: "fill-box", transformOrigin: "center" }}
+        >
+          {isDay ? (
+            <>
+              <circle cx="22" cy="30.4" r="1.7" fill="var(--gold)" />
+              {Array.from({ length: 8 }, (_, i) => (
+                <line key={i} x1="22" y1="27.4" x2="22" y2="26.7" stroke="var(--gold)" strokeWidth=".6" strokeLinecap="round" transform={`rotate(${i * 45} 22 30.4)`} />
+              ))}
+            </>
+          ) : (
+            <circle cx="22" cy="30.4" r="2.4" fill="var(--ivory)" mask={`url(#${uid}-moon)`} />
+          )}
+        </motion.g>
+      )}
+
+      {/* Hands (hour, minute, second) with a soft shadow so they float above the face */}
+      <g filter={`url(#${uid}-shadow)`}>
+        <Hand deg={angles.hour} transition={hourT}>
+          <path d="M22 24.2L20.6 22 22 13.2 23.4 22z" fill="var(--ivory)" />
+        </Hand>
+        <Hand deg={angles.minute} transition={minuteT}>
+          <path d="M22 25L20.9 22 22 8.2 23.1 22z" fill="var(--ivory)" />
+        </Hand>
+        <Hand deg={angles.second} transition={secondT}>
+          <line x1="22" y1="26.5" x2="22" y2="6.8" stroke="var(--gold)" strokeWidth=".7" strokeLinecap="round" />
+          <circle cx="22" cy="26.4" r="1.1" fill="var(--gold)" />
+        </Hand>
+      </g>
+
+      {/* Centre cap */}
+      <circle cx="22" cy="22" r="1.9" fill={`url(#${uid}-bezel)`} />
+      <circle cx="22" cy="22" r=".6" fill="rgb(0 0 0 / .6)" />
     </svg>
   );
 }
 
 function LiveDateTime({ reduce }: { reduce: boolean }) {
   const [now, setNow] = useState<Date | null>(null);
+  const [angles, setAngles] = useState<Angles>(START_POSE);
+  const [hour24, setHour24] = useState<number | null>(null);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
-    setNow(new Date());
-    const id = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(id);
+    const update = () => {
+      const d = new Date();
+      const a = handAngles(d);
+      setNow(d);
+      setHour24(a.h);
+      // Functional update: always unwrap from the previous angles so the hands only ever move forward
+      setAngles((prev) => ({
+        hour: unwrap(prev.hour, a.hour),
+        minute: unwrap(prev.minute, a.minute),
+        second: unwrap(prev.second, a.second),
+      }));
+    };
+    update();
+    const settle = window.setTimeout(() => setSettled(true), 1500);
+    const id = window.setInterval(update, 1000);
+    // When the tab comes back from the background, jump to the right time immediately
+    const onVisible = () => !document.hidden && update();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearTimeout(settle);
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
+
+  const timeText = now ? timeFmt.format(now) : null;
 
   return (
     <motion.div
@@ -95,12 +204,22 @@ function LiveDateTime({ reduce }: { reduce: boolean }) {
       role="timer"
       aria-label={now ? `Current time in South Africa: ${timeFmt.format(now)}, ${dateFmt.format(now)}` : "Current time"}
     >
-      <AnimatedClock now={now} reduce={reduce} />
+      <AnimatedClock angles={angles} hour24={hour24} settled={settled} reduce={reduce} />
       <div className="leading-tight">
         <p className="font-display text-base font-medium tracking-wide sm:text-lg">
-          {now ? (
+          {timeText ? (
             <>
-              {timeFmt.format(now)} <span className="text-[0.6rem] uppercase tracking-[0.2em] text-beige">SAST</span>
+              {/* The time slides in gently each time the minute changes */}
+              <motion.span
+                key={timeText}
+                initial={reduce ? false : { y: 7, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="inline-block tabular-nums"
+              >
+                {timeText}
+              </motion.span>{" "}
+              <span className="text-[0.6rem] uppercase tracking-[0.2em] text-beige">SAST</span>
             </>
           ) : (
             <span className="inline-block h-5 w-20 rounded bg-ivory/20" />
