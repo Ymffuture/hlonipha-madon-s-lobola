@@ -138,7 +138,7 @@ const MENU_ITEMS = [
   {
     label: "Create your invitation",
     description: "Build one like this for your event",
-    href: "https://lovable.dev",
+    href: "https://sumstacks.vercel.app",
     icon: (
       <path d="M12 3l2.2 5.3L19 10l-4.8 1.7L12 17l-2.2-5.3L5 10l4.8-1.7L12 3z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
     ),
