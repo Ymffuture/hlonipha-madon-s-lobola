@@ -7,14 +7,14 @@ import {
   type ElementType,
   type ReactNode,
 } from "react";
-import { motion, useInView, useReducedMotion, type Transition } from "framer-motion";
+import { motion, useInView, useReducedMotion, type MotionStyle, type Transition } from "framer-motion";
 
 /* ------------------------------------------------------------------ */
 /* Shared primitives                                                   */
 /* ------------------------------------------------------------------ */
 
 /** The classic "expo out" ease — matches CSS `cubic-bezier(0.22, 1, 0.36, 1)`. */
-export const EASE_OUT_EXPO: Transition["ease"] = [0.22, 1, 0.36, 1];
+export const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
  * Central reduced-motion policy. Every animated component funnels through
@@ -68,7 +68,7 @@ export function FadeIn({
 return (
     <Tag
       className={className}
-      style={style}
+      style={style as MotionStyle | undefined}
       initial={{ opacity: 0, y: reduce ? 0 : y, x: reduce ? 0 : x, filter: blur && !reduce ? "blur(6px)" : "none" }}
       whileInView={{ opacity: 1, y: 0, x: 0, filter: "blur(0px)" }}
       viewport={{ once, amount }}

@@ -177,7 +177,7 @@ function MenuDropdown({ reduce }: { reduce: boolean }) {
       transition={{ duration: reduce ? 0.01 : 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="pointer-events-auto relative"
     >
-      <button
+      <motion.button
         type="button"
         aria-label="Open menu"
         aria-haspopup="menu"
