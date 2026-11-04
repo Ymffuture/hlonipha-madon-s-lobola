@@ -75,6 +75,7 @@ export type Database = {
         Row: {
           accessibility: string | null
           additional_guests: string | null
+          arrival_time: string | null
           attendance: Database["public"]["Enums"]["attendance_status"]
           created_at: string
           dietary: string | null
@@ -90,6 +91,7 @@ export type Database = {
         Insert: {
           accessibility?: string | null
           additional_guests?: string | null
+          arrival_time?: string | null
           attendance: Database["public"]["Enums"]["attendance_status"]
           created_at?: string
           dietary?: string | null
@@ -105,6 +107,7 @@ export type Database = {
         Update: {
           accessibility?: string | null
           additional_guests?: string | null
+          arrival_time?: string | null
           attendance?: Database["public"]["Enums"]["attendance_status"]
           created_at?: string
           dietary?: string | null
@@ -153,6 +156,7 @@ export type Database = {
         Args: {
           _accessibility: string
           _additional_guests: string
+          _arrival_time?: string
           _attendance: Database["public"]["Enums"]["attendance_status"]
           _dietary: string
           _email: string
