@@ -115,6 +115,7 @@ export function Hero({ settings }: { settings?: EventSettings | undefined }) {
 
   return (
     <header className="relative flex min-h-[100svh] items-center justify-center overflow-hidden">
+      <HeroTopBar />
       <VideoBackground src={settings?.hero_video_url} />
       <div className="hero-overlay absolute inset-0" />
 
