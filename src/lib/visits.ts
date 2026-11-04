@@ -1,18 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { callRpc } from "./rpc";
 
 export type VisitStats = { total_visits: number; unique_visitors: number };
-
-type RpcResult<T> = { data: T | null; error: { message: string } | null };
-
-// Same approach as rsvp-edit.ts: the generated types don't know about
-// functions added from /sql, so call rpc through a small typed wrapper.
-function callRpc<T>(fn: string, args: Record<string, unknown> = {}): PromiseLike<RpcResult<T>> {
-  const rpc = supabase.rpc as unknown as (
-    name: string,
-    a: Record<string, unknown>,
-  ) => PromiseLike<RpcResult<unknown>>;
-  return rpc(fn, args) as PromiseLike<RpcResult<T>>;
-}
 
 const SESSION_KEY = "hm_visit_counted"; // once per browser tab session: refreshes don't count again
 const VISITOR_KEY = "hm_visitor"; // once per browser: makes the "unique visitors" number

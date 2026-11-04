@@ -1,21 +1,9 @@
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { callRpc } from "./rpc";
 import type { Attendance } from "./event";
 
-/**
- * The generated database types only know the functions that existed before
- * this feature (submit_rsvp, has_role), so the two new guest functions are
- * called through a narrowly-typed wrapper here.
- */
-type RpcResult<T> = { data: T | null; error: { message: string } | null };
-
-function callRpc<T>(fn: string, args: Record<string, unknown>): PromiseLike<RpcResult<T>> {
-  const rpc = supabase.rpc as unknown as (
-    name: string,
-    a: Record<string, unknown>,
-  ) => PromiseLike<RpcResult<unknown>>;
-  return rpc(fn, args) as PromiseLike<RpcResult<T>>;
-}
+// The generated database types only know the older functions, so the guest functions are
+// called through the shared, safe wrapper in ./rpc (keeps `this`, never throws, never hangs).
 
 export function lookupRsvpRpc(phone: string) {
   return callRpc<RsvpLookup>("lookup_rsvp", { _phone: phone });
@@ -75,6 +63,8 @@ export type RsvpLookup = {
 export const RSVP_EDIT_ERRORS: Record<string, string> = {
   NOT_FOUND: "We couldn't find an RSVP with that phone number. Please check the number, or RSVP for the first time in the form above.",
   INVALID_PHONE: "Please enter a valid phone number.",
+  REQUEST_TIMEOUT: "This is taking too long. Please check your connection and try again.",
+  "Could not find the function": "Checking and editing RSVPs is not switched on yet. Please contact the family.",
   INVALID_EMAIL: "Please enter a valid email address.",
   INVALID_GUEST_COUNT: "Please choose a valid number of guests.",
   GUEST_NAMES_REQUIRED: "Additional guest names are required when bringing more than 1 guest.",
