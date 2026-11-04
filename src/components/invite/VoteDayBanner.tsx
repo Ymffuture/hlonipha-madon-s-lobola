@@ -66,12 +66,12 @@ export function VoteDayBanner() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
           )}
           <span
-            className={`relative inline-flex h-3 w-3 rounded-full ${state === "open" ? "bg-gold" : "bg-beige/60"}`}
+            className={`relative inline-flex h-3 w-3 rounded-full ${state === "open" ? "bg-amber-400" : "bg-beige/60"}`}
           />
         </span>
         <Vote className="h-6 w-6 text-gold" aria-hidden="true" />
         <p className="text-xs uppercase tracking-[0.35em] text-gold">
-          Voting Day · 4 November 2026
+          Voting Day · 04 November 2026
         </p>
       </div>
 
