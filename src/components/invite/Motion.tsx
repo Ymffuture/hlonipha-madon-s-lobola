@@ -68,13 +68,11 @@ export function FadeIn({
 return (
     <Tag
       className={className}
-      style={style as MotionStyle | undefined}
+      style={{ willChange: "transform, opacity", ...style } as MotionStyle}
       initial={{ opacity: 0, y: reduce ? 0 : y, x: reduce ? 0 : x, filter: blur && !reduce ? "blur(6px)" : "none" }}
       whileInView={{ opacity: 1, y: 0, x: 0, filter: "blur(0px)" }}
       viewport={{ once, amount }}
       transition={{ delay, ...t }}
-      // Only animate properties the compositor can handle cheaply.
-      willChange="transform, opacity"
     >
       {children}
     </Tag>
