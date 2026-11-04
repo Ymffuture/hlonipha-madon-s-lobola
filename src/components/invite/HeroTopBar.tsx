@@ -197,7 +197,7 @@ function MenuDropdown({ reduce }: { reduce: boolean }) {
             transition={panel}
           />
         </svg>
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {open && (
