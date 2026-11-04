@@ -27,7 +27,7 @@ describe("RsvpForm guest dropdown", () => {
   it("offers 1..max_guests taken from the settings prop", () => {
     render(<RsvpForm settings={settings} />);
     // The dropdown only appears once the guest says they are attending (first radio).
-    fireEvent.click(screen.getAllByRole("radio")[0]);
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
     const select = screen.getByLabelText(/number of guests/i) as HTMLSelectElement;
     expect(
       within(select)
@@ -38,7 +38,7 @@ describe("RsvpForm guest dropdown", () => {
 
   it("shows the live 'Incomplete · 1 of 2' label when 3 guests but only 1 name", () => {
     render(<RsvpForm settings={settings} />);
-    fireEvent.click(screen.getAllByRole("radio")[0]);
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
     fireEvent.change(screen.getByLabelText(/number of guests/i), { target: { value: "3" } });
     fireEvent.change(screen.getByLabelText(/additional guest names/i), {
       target: { value: "Tsakani" },
