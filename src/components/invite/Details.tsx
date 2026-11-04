@@ -2,6 +2,7 @@ import { CalendarDays, CalendarPlus, Clock, MapPin, Shirt, Phone, Navigation } f
 import { formatEventDate, mapsUrl, type EventSettings } from "@/lib/event";
 import { downloadCalendarInvite } from "@/lib/calendar";
 import { Countdown } from "./Countdown";
+import { VoteDayBanner } from "./VoteDayBanner";
 import { CountdownBackground } from "./CountdownBackground";
 import { Floral, SectionTitle } from "./Ornament";
 import { FadeIn, Typewriter } from "./Motion";
@@ -32,6 +33,7 @@ export function Details({ settings }: { settings: EventSettings }) {
           <FadeIn>
             <SectionTitle eyebrow="Counting down" title="Until We Celebrate" light />
           </FadeIn>
+          <VoteDayBanner />
           <Countdown iso={settings.event_datetime} />
           <p className="mt-4 text-center text-xs text-ivory/80">South Africa Standard Time (Johannesburg)</p>
           <FadeIn delay={0.15} className="mt-8 flex justify-center">
