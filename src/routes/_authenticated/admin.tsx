@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ATTENDANCE_LABELS, computeStats, eventSettingsQuery, fromJhbLocalInput, rsvpsToCsv, toJhbLocalInput,
+  ATTENDANCE_LABELS, arrivalLabel, computeStats, eventSettingsQuery, fromJhbLocalInput, rsvpsToCsv, toJhbLocalInput,
   type Attendance, type EventSettings, type Rsvp,
 } from "@/lib/event";
 import { Input } from "@/components/ui/input";
@@ -257,7 +257,7 @@ function AdminPage() {
           <DialogHeader><DialogTitle>{viewing?.full_name}</DialogTitle></DialogHeader>
           {viewing && (
             <dl className="space-y-2 text-sm">
-              {[["Phone", viewing.phone], ["Email", viewing.email], ["Status", ATTENDANCE_LABELS[viewing.attendance]], ["Guests", viewing.guest_count], ["Additional guests", viewing.additional_guests], ["Dietary", viewing.dietary], ["Accessibility", viewing.accessibility], ["Message", viewing.message], ["Submitted", new Date(viewing.created_at).toLocaleString("en-ZA")]].map(([k, v]) => (
+              {[["Phone", viewing.phone], ["Email", viewing.email], ["Status", ATTENDANCE_LABELS[viewing.attendance]], ["Arrival", arrivalLabel(viewing.arrival_time)], ["Guests", viewing.guest_count], ["Additional guests", viewing.additional_guests], ["Dietary", viewing.dietary], ["Accessibility", viewing.accessibility], ["Message", viewing.message], ["Submitted", new Date(viewing.created_at).toLocaleString("en-ZA")]].map(([k, v]) => (
                 <div key={String(k)}><dt className="text-xs uppercase text-muted-foreground">{k}</dt><dd className="whitespace-pre-wrap">{v || "—"}</dd></div>
               ))}
             </dl>
