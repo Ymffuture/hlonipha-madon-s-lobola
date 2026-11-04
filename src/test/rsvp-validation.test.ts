@@ -11,13 +11,14 @@ import {
 const base = {
   full_name: "Anna Shilenge",
   phone: "0723456789",
-  email: "",
+  email: "anna@example.com",
   attendance: "attending" as Attendance,
   guest_count: 2,
   additional_guests: "",
   dietary: "",
   accessibility: "",
   message: "",
+  arrival_time: "on_time",
 };
 
 function failingPaths(data: typeof base, max = 5) {
@@ -31,8 +32,26 @@ describe("RSVP validation rules", () => {
     expect(failingPaths(base)).toContain("additional_guests");
   });
 
-  it("requires a message to the couple when guest count is greater than 1", () => {
+  it("always requires a message to the couple", () => {
     expect(failingPaths(base)).toContain("message");
+    expect(failingPaths({ ...base, guest_count: 1 })).toContain("message");
+    expect(failingPaths({ ...base, attendance: "not_attending", guest_count: 1 })).toContain("message");
+  });
+
+  it("requires an email address, and it must be valid", () => {
+    expect(failingPaths({ ...base, guest_count: 1, message: "Hi", email: "" })).toContain("email");
+    expect(failingPaths({ ...base, guest_count: 1, message: "Hi", email: "not-an-email" })).toContain("email");
+    expect(failingPaths({ ...base, guest_count: 1, message: "Hi" })).toEqual([]);
+  });
+
+  it("requires an arrival time only when attending, and only the 3 known choices", () => {
+    const ok = { ...base, guest_count: 1, message: "Hi" };
+    expect(failingPaths({ ...ok, arrival_time: "" })).toContain("arrival_time");
+    expect(failingPaths({ ...ok, arrival_time: "early" })).toEqual([]);
+    expect(failingPaths({ ...ok, arrival_time: "late" })).toEqual([]);
+    expect(failingPaths({ ...ok, arrival_time: "midnight" })).toContain("arrival_time");
+    expect(failingPaths({ ...ok, attendance: "undecided", arrival_time: "" })).not.toContain("arrival_time");
+    expect(failingPaths({ ...ok, attendance: "not_attending", arrival_time: "" })).not.toContain("arrival_time");
   });
 
   it("accepts an RSVP for more than one guest when names and message are provided", () => {
@@ -81,16 +100,12 @@ describe("RSVP validation rules", () => {
     ).toContain("additional_guests");
   });
 
-  it("does not require guest names or a message for a single guest", () => {
-    const paths = failingPaths({ ...base, guest_count: 1 });
-    expect(paths).not.toContain("additional_guests");
-    expect(paths).not.toContain("message");
+  it("does not require guest names for a single guest", () => {
+    expect(failingPaths({ ...base, guest_count: 1 })).not.toContain("additional_guests");
   });
 
   it("does not require guest names when not attending", () => {
-    const paths = failingPaths({ ...base, attendance: "not_attending", guest_count: 1 });
-    expect(paths).not.toContain("additional_guests");
-    expect(paths).not.toContain("message");
+    expect(failingPaths({ ...base, attendance: "not_attending", guest_count: 1 })).not.toContain("additional_guests");
   });
 
   it("masks phone numbers for the smart info hint", () => {
