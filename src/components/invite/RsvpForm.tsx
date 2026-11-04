@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Check, CheckCircle2, Info, Loader2, ScrollText } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AlertCircle, Check, CheckCircle2, Clock, Info, Loader2, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { guestNamesStatus, makeRsvpSchema, maskPhone, rsvpErrorMessage, type Attendance, type EventSettings } from "@/lib/event";
+import { ARRIVAL_OPTIONS, formatEventDate, guestNamesStatus, makeRsvpSchema, maskPhone, rsvpErrorMessage, type Arrival, type Attendance, type EventSettings } from "@/lib/event";
 import { RsvpEditModal } from "./RsvpEditModal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,8 +11,15 @@ import { SectionTitle } from "./Ornament";
 
 type Errors = Partial<Record<string, string>>;
 
+const ARRIVAL_TEXT: Record<Arrival, { title: string; hint: (start: string | null) => string }> = {
+  early: { title: "Earlier", hint: (t) => (t ? `Before ${t}` : "Before the start time") },
+  on_time: { title: "On time", hint: (t) => (t ? `Around ${t}` : "Around the start time") },
+  late: { title: "A bit late", hint: () => "Up to 1 hour after the start" },
+};
+
 export function RsvpForm({ settings }: { settings: EventSettings }) {
   const maxGuests = settings.max_guests;
+  const reduce = useReducedMotion();
   const [form, setForm] = useState({
     full_name: "",
     phone: "",
@@ -20,6 +27,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
     attendance: "" as Attendance | "",
     guest_count: 1,
     additional_guests: "",
+    arrival_time: "" as Arrival | "",
     dietary: "",
     accessibility: "",
     message: "",
@@ -44,19 +52,29 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
       return;
     }
     const d = parsed.data;
+    const coming = d.attendance !== "not_attending";
+    const arrival = coming ? d.arrival_time : "";
     setStatus("saving");
     setServerError("");
-    const { data, error } = await supabase.rpc("submit_rsvp", {
+    const args = {
       _full_name: d.full_name,
       _phone: d.phone,
       _email: d.email,
       _attendance: d.attendance,
-      _guest_count: d.attendance === "not_attending" ? 0 : d.guest_count,
-      _additional_guests: d.additional_guests,
+      _guest_count: coming ? d.guest_count : 0,
+      // The names field is closed for a single guest, so never send stale names from an earlier choice
+      _additional_guests: coming && d.guest_count > 1 ? d.additional_guests : "",
       _dietary: d.dietary,
       _accessibility: d.accessibility,
       _message: d.message,
-    });
+    };
+    let { data, error } = await supabase.rpc("submit_rsvp", arrival ? { ...args, _arrival_time: arrival } : args);
+    // Safety net: if the website is updated before sql/rsvp-arrival.sql has been run, the database does not
+    // know the arrival field yet. Save the RSVP without it instead of failing.
+    if (error && arrival && (error.code === "PGRST202" || /schema cache/i.test(error.message))) {
+      console.warn("[rsvp] arrival_time is not in the database yet, saving without it. Run sql/rsvp-arrival.sql.");
+      ({ data, error } = await supabase.rpc("submit_rsvp", args));
+    }
     if (error || !data) {
       setStatus("error");
       setServerError(rsvpErrorMessage(error?.message));
@@ -94,6 +112,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
     names.expected === 1
       ? "Add 1 name (no comma needed)."
       : `Add ${names.expected} names separated by commas (${names.expected - 1} commas).`;
+  const startTime = settings.event_datetime ? formatEventDate(settings.event_datetime).time : null;
   const field = "mt-1.5 bg-background";
   const Err = ({ k }: { k: string }) =>
     errors[k] ? (
@@ -128,8 +147,8 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
             </div>
           </div>
           <div>
-            <Label htmlFor="email">Email (optional)</Label>
-            <Input id="email" type="email" autoComplete="email" className={field} value={form.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors["email"]} aria-describedby="email-err" maxLength={255} />
+            <Label htmlFor="email">Email *</Label>
+            <Input id="email" type="email" autoComplete="email" className={field} value={form.email} onChange={(e) => set("email", e.target.value)} aria-invalid={!!errors["email"]} aria-describedby="email-err" maxLength={255} required />
             <Err k="email" />
           </div>
 
@@ -153,8 +172,8 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
           </fieldset>
 
           {attending && (
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
+            <div className="space-y-5">
+              <div className="sm:max-w-xs">
                 <Label htmlFor="guest_count">Number of guests (incl. you)</Label>
                 <select id="guest_count" className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.guest_count} onChange={(e) => set("guest_count", Number(e.target.value))}>
                   {Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => (
@@ -162,40 +181,72 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
                   ))}
                 </select>
                 <Err k="guest_count" />
-              </div>
-              <div>
-                <div className="flex items-baseline justify-between gap-2">
-                  <Label htmlFor="additional_guests">Additional guest names{needsGuestNames ? " *" : ""}</Label>
-                  {needsGuestNames && (
-                    <span
-                      role="status"
-                      aria-live="polite"
-                      className={`flex items-center gap-1 text-xs font-medium ${names.state === "complete" ? "text-gold" : "text-destructive"}`}
-                    >
-                      {names.state === "complete" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
-                      {names.state === "complete" ? `Complete · ${names.got} of ${names.expected}` : names.state === "incomplete" ? `Incomplete · ${names.got} of ${names.expected}` : `Too many · ${names.got} of ${names.expected}`}
-                    </span>
-                  )}
-                </div>
-                <Input
-                  id="additional_guests"
-                  className={field}
-                  value={form.additional_guests}
-                  onChange={(e) => set("additional_guests", e.target.value)}
-                  maxLength={1000}
-                  placeholder={namePlaceholder}
-                  aria-invalid={!!errors["additional_guests"] || (needsGuestNames && names.state !== "complete" && form.additional_guests.trim().length > 0)}
-                  aria-describedby="additional_guests-help additional_guests-err"
-                  required={needsGuestNames}
-                />
-                {needsGuestNames && (
-                  <p id="additional_guests-help" className="mt-1 text-xs text-muted-foreground">
-                    {nameHelp}
-                  </p>
+                {!needsGuestNames && maxGuests > 1 && (
+                  <p className="mt-1 text-xs text-muted-foreground">Bringing others? Choose 2 or more and a field for their names will open.</p>
                 )}
-                <Err k="additional_guests" />
               </div>
+
+              {/* Closed for 1 guest, slides open for 2 or more */}
+              <AnimatePresence initial={false}>
+                {needsGuestNames && (
+                  <motion.div
+                    key="guest-names"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: reduce ? 0.01 : 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    className="-mx-1 overflow-hidden px-1 pb-1"
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <Label htmlFor="additional_guests">Additional guest names *</Label>
+                      <span
+                        role="status"
+                        aria-live="polite"
+                        className={`flex items-center gap-1 text-xs font-medium ${names.state === "complete" ? "text-gold" : "text-destructive"}`}
+                      >
+                        {names.state === "complete" ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {names.state === "complete" ? `Complete · ${names.got} of ${names.expected}` : names.state === "incomplete" ? `Incomplete · ${names.got} of ${names.expected}` : `Too many · ${names.got} of ${names.expected}`}
+                      </span>
+                    </div>
+                    <Input
+                      id="additional_guests"
+                      className={field}
+                      value={form.additional_guests}
+                      onChange={(e) => set("additional_guests", e.target.value)}
+                      maxLength={1000}
+                      placeholder={namePlaceholder}
+                      aria-invalid={!!errors["additional_guests"] || (names.state !== "complete" && form.additional_guests.trim().length > 0)}
+                      aria-describedby="additional_guests-help additional_guests-err"
+                      required
+                    />
+                    <p id="additional_guests-help" className="mt-1 text-xs text-muted-foreground">
+                      {nameHelp}
+                    </p>
+                    <Err k="additional_guests" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+          )}
+
+          {attending && (
+            <fieldset>
+              <legend className="flex items-center gap-1.5 text-sm font-medium">
+                <Clock className="h-4 w-4 text-gold" aria-hidden="true" />
+                When will you arrive?{form.attendance === "attending" ? " *" : ""}
+              </legend>
+              {startTime && <p className="mt-1 text-xs text-muted-foreground">The celebration starts at {startTime}. Knowing when to expect you helps us plan seating and food.</p>}
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {ARRIVAL_OPTIONS.map((v) => (
+                  <label key={v} className={`cursor-pointer rounded-lg border px-4 py-3 text-center text-sm transition ${form.arrival_time === v ? "border-gold bg-gold text-accent-foreground" : "border-input bg-background hover:border-gold"}`}>
+                    <input type="radio" name="arrival_time" value={v} className="sr-only" checked={form.arrival_time === v} onChange={() => set("arrival_time", v)} />
+                    <span className="block font-medium">{ARRIVAL_TEXT[v].title}</span>
+                    <span className="block text-xs opacity-80">{ARRIVAL_TEXT[v].hint(startTime)}</span>
+                  </label>
+                ))}
+              </div>
+              <Err k="arrival_time" />
+            </fieldset>
           )}
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -209,7 +260,7 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
             </div>
           </div>
           <div>
-            <Label htmlFor="message">Message to the couple{needsGuestNames ? " *" : ""}</Label>
+            <Label htmlFor="message">Message to the couple *</Label>
             <Textarea
               id="message"
               className={field}
@@ -217,9 +268,10 @@ export function RsvpForm({ settings }: { settings: EventSettings }) {
               value={form.message}
               onChange={(e) => set("message", e.target.value)}
               maxLength={1000}
+              placeholder="Write a few kind words for the couple…"
               aria-invalid={!!errors["message"]}
               aria-describedby="message-err"
-              required={needsGuestNames}
+              required
             />
             <Err k="message" />
           </div>
