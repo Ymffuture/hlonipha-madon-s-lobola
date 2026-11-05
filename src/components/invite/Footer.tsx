@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { EventSettings } from "@/lib/event";
 import { VideoBackground } from "./VideoBackgroundfooter";
 import { VisitorCounter } from "./VisitorCounter";
+import { StatsMarquee } from "./StatsMarquee";
 
 export function Footer({ settings }: { settings?: EventSettings | undefined }) {
   return (
@@ -23,6 +24,7 @@ export function Footer({ settings }: { settings?: EventSettings | undefined }) {
           <Link to="/admin" className="text-[11px] uppercase tracking-[0.3em] text-beige/60 hover:text-beige">Admin</Link>
         </div>
       </div>
+      <StatsMarquee className="relative" />
     </footer>
   );
 }
