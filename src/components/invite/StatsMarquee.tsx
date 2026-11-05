@@ -82,8 +82,8 @@ export function StatsMarquee({ className = "" }: { className?: string }) {
         <div className="stats-marquee flex w-max">
           {row(false)}
           {row(true)}
-        </marquee>
+        </div>
       )}
-    </div>
+    </marquee>
   );
 }
