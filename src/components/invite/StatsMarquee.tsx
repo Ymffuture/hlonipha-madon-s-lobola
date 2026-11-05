@@ -71,7 +71,7 @@ export function StatsMarquee({ className = "" }: { className?: string }) {
   );
 
   return (
-    <div
+    <marquee 
       className={`relative overflow-hidden border-t border-gold/30 bg-black/40 py-3 backdrop-blur-sm ${className}`}
       role="region"
       aria-label="Site and election statistics"
@@ -82,7 +82,7 @@ export function StatsMarquee({ className = "" }: { className?: string }) {
         <div className="stats-marquee flex w-max">
           {row(false)}
           {row(true)}
-        </div>
+        </marquee>
       )}
     </div>
   );
