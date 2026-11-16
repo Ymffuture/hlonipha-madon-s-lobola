@@ -281,3 +281,43 @@ input:autofill{
 background :transparent;
   color:#222 ;
 } 
+
+  /* GPU-composited infinite loop. 45s ≈ 22px/s: slow, luxurious crawl. */
+@keyframes stats-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+.stats-marquee {
+  animation: stats-scroll 45s linear infinite;
+  /* Contain paint work; translate3d forces its own layer. */
+  backface-visibility: hidden;
+}
+
+/* Fully paused when offscreen / tab hidden (JS toggles this attribute). */
+section[data-running="false"] .stats-marquee { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-marquee { animation: none; }
+}
+
+/* Elegant gold fade at the edges — the detail that reads as "premium". */
+.stats-marquee-mask {
+  background:
+    linear-gradient(to right, rgba(0, 0, 0, 0.85), transparent 6%),
+    linear-gradient(to left, rgba(0, 0, 0, 0.85), transparent 6%);
+}
+
+/* Skeleton shimmer while data loads. */
+@keyframes stats-shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+.stats-shimmer {
+  background-image: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.25), transparent);
+  background-size: 200% 100%;
+  animation: stats-shimmer 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stats-shimmer { animation: none; }
+}
